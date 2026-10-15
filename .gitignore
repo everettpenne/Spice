@@ -16,3 +16,5 @@ tools/fake-jellyfin/test.mp4
 tools/fake-jellyfin/test.srt
 __pycache__/
 dist/
+tools/fake-jellyfin/dts.mkv
+tools/fake-jellyfin/hls/

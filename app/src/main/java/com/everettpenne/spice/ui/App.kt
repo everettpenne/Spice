@@ -89,8 +89,8 @@ fun SpiceRoot() {
                             DetailScreen(e.arguments?.getString("id").orEmpty(), nav, onBack = { navController.popBackStack() })
                         }
                         composable("play/{id}", listOf(navArgument("id") { type = NavType.StringType })) { e ->
-                            PlayerScreen(e.arguments?.getString("id").orEmpty(), onBack = { navController.popBackStack() },
-                                onPlayNext = { next -> navController.navigate(Routes.play(next)) { popUpTo(route ?: Routes.HOME) { inclusive = true } } })
+                            PlayerScreen(e.arguments?.getString("id").orEmpty(), nav, onBack = { navController.popBackStack() },
+                                onSwitch = { next -> navController.navigate(Routes.play(next)) { popUpTo(route ?: Routes.HOME) { inclusive = true } } })
                         }
                     }
                 }

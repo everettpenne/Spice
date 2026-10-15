@@ -106,7 +106,7 @@ private fun DetailBody(item: JfItem, nav: Navigator, onChanged: () -> Unit, scop
             when (val e = episodes.state) {
                 Load.Loading -> item { LoadingRow() }
                 is Load.Error -> item { ErrorState(e.failure, episodes.reload) }
-                is Load.Done -> items(e.value, key = { it.id }) { ep -> EpisodeRow(ep, nav) }
+                is Load.Done -> items(e.value, key = { it.id }) { ep -> EpisodeRow(ep, { nav.play(ep.id) }) }
             }
         }
         val cast = item.people.filter { it.type == "Actor" }.take(8).map { it.name }
@@ -117,17 +117,19 @@ private fun DetailBody(item: JfItem, nav: Navigator, onChanged: () -> Unit, scop
     }
 }
 
+/** One episode in a list: still, number and title, runtime, a line of the story. [current] marks the one playing now. */
 @Composable
-private fun EpisodeRow(ep: JfItem, nav: Navigator) {
+fun EpisodeRow(ep: JfItem, onClick: () -> Unit, current: Boolean = false) {
     val graph = LocalContext.current.graph
-    Row(Modifier.fillMaxWidth().clickable { nav.play(ep.id) }.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(Modifier.width(140.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp))) {
             ItemImage(graph.urls.wide(ep, 400), Modifier.fillMaxSize())
             ProgressStrip(ep.progress)
             if (ep.userData.played) Icon(Icons.Rounded.CheckCircle, "Watched", tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(18.dp))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${ep.index?.let { "$it. " }.orEmpty()}${ep.name}", style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text("${ep.index?.let { "$it. " }.orEmpty()}${ep.name}", style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                color = if (current) Spice.accent else MaterialTheme.colorScheme.onSurface)
             ep.runtimeMinutes?.let { Text(formatMinutes(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             ep.overview?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }

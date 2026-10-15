@@ -16,12 +16,23 @@ TOKEN, USER_ID, SERVER_ID = "tok-demo", "u1", "srv1"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8096
 TICKS = 10_000_000
 
+DTS = os.path.join(HERE, "dts.mkv")
+HLS = os.path.join(HERE, "hls")
+
 def make_video():
-    if os.path.exists(VIDEO): return
+    """Makes (once) the test media: test.mp4 (H.264 + AAC + a subtitle track, 40 s), dts.mkv (DTS audio, which a phone cannot decode, so Spice
+    must fall back to a transcode) and hls/ (what the server's transcode would send: H.264 + AAC segments)."""
     srt = os.path.join(HERE, "test.srt")
     open(srt, "w").write("1\n00:00:01,000 --> 00:00:06,000\nHello from the fake server\n\n2\n00:00:08,000 --> 00:00:14,000\nSubtitles work\n")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=size=1280x720:rate=24:duration=40", "-f", "lavfi", "-i", "sine=frequency=440:duration=40",
-                    "-i", srt, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-c:s", "mov_text", "-metadata:s:s:0", "language=eng", "-shortest", VIDEO], check=True)
+    run = lambda *a: subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *a], check=True)
+    if not os.path.exists(VIDEO):
+        run("-f", "lavfi", "-i", "testsrc=size=1280x720:rate=24:duration=40", "-f", "lavfi", "-i", "sine=frequency=440:duration=40", "-i", srt,
+            "-map", "0:v", "-map", "1:a", "-map", "2:s", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-c:s", "mov_text", "-metadata:s:s:0", "language=eng", VIDEO)
+    if not os.path.exists(DTS): run("-i", VIDEO, "-t", "20", "-map", "0:v", "-map", "0:a", "-c:v", "copy", "-c:a", "dca", "-strict", "-2", DTS)
+    if not os.path.exists(HLS):
+        os.makedirs(HLS)
+        run("-i", VIDEO, "-map", "0:v", "-map", "0:a", "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p", "-c:a", "aac", "-f", "hls", "-hls_time", "4",
+            "-hls_playlist_type", "vod", "-hls_segment_filename", os.path.join(HLS, "seg%d.ts"), os.path.join(HLS, "index.m3u8"))
 
 def item(id, name, type, **kw):
     d = {"Id": id, "Name": name, "Type": type, "ImageTags": {"Primary": "p", "Thumb": "t"}, "BackdropImageTags": ["b"], "UserData": {"PlaybackPositionTicks": 0, "Played": False}}
@@ -41,6 +52,9 @@ for n, t in enumerate(titles):
     add(item(f"m{n}", t, "Movie", ProductionYear=2010 + n, Overview=LOREM, RunTimeTicks=40 * TICKS, CommunityRating=7.0 + n / 10, OfficialRating="PG-13",
              Genres=["Sci-Fi", "Drama"], MediaSources=SRC(f"m{n}"), ParentId="lib-m", DateCreated=f"2026-0{n+1}-01",
              People=[{"Id": f"pp{n}", "Name": "An Actor", "Role": "Hero", "Type": "Actor"}]))
+add(item("m6", "Needs Transcoding", "Movie", ProductionYear=2019, Overview="Its audio is DTS, which phones cannot decode, so Spice has to ask the server to convert it.", RunTimeTicks=20 * TICKS,
+         CommunityRating=6.5, Genres=["Test"], MediaSources=[dict(SRC("m6")[0], Container="mkv", MediaStreams=[{"Type": "Video", "Index": 0, "Codec": "h264"}, {"Type": "Audio", "Index": 1, "Codec": "dts", "Language": "eng"}])],
+         ParentId="lib-m", DateCreated="2026-07-01"))
 ITEMS["m1"]["UserData"] = {"PlaybackPositionTicks": 16 * TICKS, "PlayedPercentage": 40.0, "Played": False}
 for s, name in enumerate(["Severance", "Andor"]):
     sid = f"s{s}"
@@ -113,7 +127,10 @@ class H(BaseHTTPRequestHandler):
             s, l = int(q.get("StartIndex", 0)), int(q.get("Limit", 60))
             return self.send(200, {"Items": pool[s:s + l], "TotalRecordCount": len(pool)})
         m = re.match(r"/Videos/[^/]+/(stream|master\.m3u8)", p)
-        if m and m[1] == "stream": return self.video()
+        if m and m[1] == "stream": return self.video(DTS if "/m6/" in p else VIDEO)
+        if m: return self.send(200, open(os.path.join(HLS, "index.m3u8"), "rb").read(), "application/vnd.apple.mpegurl")
+        m = re.match(r"/Videos/[^/]+/(seg\d+\.ts)", p)
+        if m: return self.send(200, open(os.path.join(HLS, m[1]), "rb").read(), "video/mp2t")
         return self.send(404)
     def art(self, id, wide):
         import io
@@ -123,12 +140,12 @@ class H(BaseHTTPRequestHandler):
         for y in range(h): d.line([(0, y), (w, y)], fill=tuple(int(c) for c in __import__("colorsys").hsv_to_rgb(hue / 360, .55, .35 + .4 * y / h) and [x * 255 for x in __import__("colorsys").hsv_to_rgb(hue / 360, .55, .35 + .4 * y / h)]))
         d.text((16, 16), ITEMS.get(id, {}).get("Name", id), fill="white")
         buf = io.BytesIO(); img.save(buf, "JPEG"); return buf.getvalue()
-    def video(self):
-        size = os.path.getsize(VIDEO); rng = self.headers.get("Range"); start, end = 0, size - 1
+    def video(self, path):
+        size = os.path.getsize(path); rng = self.headers.get("Range"); start, end = 0, size - 1
         if rng and (m := re.match(r"bytes=(\d*)-(\d*)", rng)):
             if m[1]: start = int(m[1])
             if m[2]: end = int(m[2])
-        with open(VIDEO, "rb") as f: f.seek(start); data = f.read(end - start + 1)
+        with open(path, "rb") as f: f.seek(start); data = f.read(end - start + 1)
         extra = {"Accept-Ranges": "bytes"}
         if rng: extra["Content-Range"] = f"bytes {start}-{end}/{size}"
         self.send(206 if rng else 200, data, "video/mp4", extra)

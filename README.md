@@ -7,11 +7,16 @@ Sign in to your own Jellyfin server, browse your libraries, and play from them. 
 - **Library:** your libraries and favourites; sort by name, date added, year or rating.
 - **Detail:** artwork, facts, Play/Resume, watched and favourite; seasons and episodes for a series.
 - **Search:** movies, series and episodes, as you type.
-- **Player:** landscape, direct play of the original file with an automatic fall-back to the server's transcode, audio and subtitle
-  choice, 10-second skips, and progress reported back to the server so your place follows you between devices.
+- **Player:** rotates. Held upright, the video sits at the top and the details sit below it: title, year, rating, runtime, seasons, the
+  season's other episodes (tap one to switch) and More Like This. Turned sideways (or with the full-screen button) it fills the screen.
+  It plays the original file when the phone can, and asks the server to transcode when it can't (including a file whose audio the phone
+  cannot decode, such as DTS, which would otherwise play silently). Audio and subtitle choice, 10-second skips.
+- **Background playback:** sound continues when you switch apps or lock the phone, with a media notification to pause or skip. Leaving the
+  player (or swiping the app away) stops it. Progress is reported to the server from the playback service, so "Continue Watching" is right
+  even after background listening.
 - **Settings:** server and account, direct play or always transcode, play next episode, sign out.
 
-Not yet: Quick Connect, music, live TV, downloads, casting, picture-in-picture, external subtitle files.
+Not yet: Quick Connect, music, live TV, downloads, casting, picture-in-picture, external subtitle files, a queue across several titles.
 
 Spice is an independent app and is not affiliated with the Jellyfin project. It uses Jellyfin's public REST API.
 
@@ -39,7 +44,8 @@ Release signing comes from the environment (`SPICE_RELEASE_STORE_FILE`, `_STORE_
 python3 tools/fake-jellyfin/server.py        # sign in as demo / demo; the emulator reaches it at 10.0.2.2:8096
 ```
 
-`FlowAgainstFakeServerTest` (instrumented) drives connect → sign in → browse → detail → playback against it and saves screenshots.
+`FlowAgainstFakeServerTest` and `PlayerBehaviourTest` (instrumented) drive connect → sign in → browse → detail → playback against it: leaving the player,
+portrait and landscape layouts, a DTS file falling back to a transcode, and playback continuing in the background.
 
 ## Credits
 
