@@ -10,6 +10,7 @@ os.makedirs(OUT, exist_ok=True)
 DEFS = '''<defs>
   <linearGradient id="bg" x1="0" y1="0" x2="0" y2="108" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#303033"/><stop offset="1" stop-color="#0F0F11"/></linearGradient>
   <linearGradient id="line" x1="22" y1="26" x2="86" y2="100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9BE4FF"/><stop offset=".5" stop-color="#00A4DC"/><stop offset="1" stop-color="#AA5CC3"/></linearGradient>
+  <radialGradient id="iris2" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3FB8F0"/><stop offset="1" stop-color="#0770B0"/></radialGradient>
   <radialGradient id="iris" cx="54" cy="54" r="16" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7FD6FF"/><stop offset=".55" stop-color="#0A8FD0"/><stop offset="1" stop-color="#06406E"/></radialGradient>
 </defs>'''
 S = 'stroke="url(#line)" stroke-linecap="round" stroke-linejoin="round"'
@@ -69,6 +70,35 @@ def concept_c():
     s += f'<path d="{sparkle(80,26,8)}" fill="#E6F7FF" fill-opacity=".92" stroke="none"/>'
     return s
 
+# --- The eye, refined: more open, bolder and plainer (no inner ring, highlight or second ridge) -----------------------------
+def clip(id_, d): return f'<clipPath id="{id_}"><path d="{d}"/></clipPath>'
+
+def eye_open():
+    """Round, fully visible iris in a wide-open almond; one bold dune ridge under it."""
+    eye = "M20,52C34,26 74,26 88,52C74,78 34,78 20,52Z"
+    return (f'<path d="{eye}" fill="{INK}" {S} stroke-width="4.4"/>'
+            f'<path d="{circle(54,52,16)}" fill="url(#iris2)"/>'
+            f'<path d="M12,92C28,80 44,90 58,84C72,78 84,88 98,82" {S} stroke-width="4.4"/>')
+
+def eye_wide():
+    """A larger iris tucked under the lids, as a real open eye looks; the dune sits right under it."""
+    eye = "M18,52C32,24 76,24 90,52C76,80 32,80 18,52Z"
+    return (clip("e", eye) + f'<path d="{eye}" fill="{INK}"/>'
+            f'<g clip-path="url(#e)"><path d="{circle(54,52,22)}" fill="url(#iris2)"/></g>'
+            f'<path d="{eye}" {S} stroke-width="4.4"/>'
+            f'<path d="M12,94C28,82 44,92 58,86C72,80 84,90 98,84" {S} stroke-width="4.4"/>')
+
+def eye_dune_lid():
+    """The lower eyelid is the dune: a smooth upper lid over a rolling lower lid. One shape, nothing else."""
+    upper = "C32,26 76,26 92,56"
+    lower = "C80,70 70,63 56,69C42,75 30,66 16,56"
+    eye = f"M16,56{upper}{lower}Z"
+    return (clip("e", eye) + f'<path d="{eye}" fill="{INK}"/>'
+            f'<g clip-path="url(#e)"><path d="{circle(54,54,21)}" fill="url(#iris2)"/></g>'
+            f'<path d="{eye}" {S} stroke-width="4.6"/>')
+
+EYES = {"eye-open": eye_open, "eye-wide": eye_wide, "eye-dune-lid": eye_dune_lid}
+
 CONCEPTS = {"eye": concept_a, "moons": concept_b, "bloom": concept_c}
 
 def svg(body, rounded=True):
@@ -92,4 +122,15 @@ if __name__ == "__main__":
     sheet = Image.new("RGB", (512 * 3 + 80, 592), (158, 160, 246))
     for i, im in enumerate(ims): sheet.paste(im, (20 + 532 * i, 40), im)
     sheet.save(os.path.join(OUT, "preview.png"))
+    pngs = []
+    for name, fn in EYES.items():
+        path = os.path.join(OUT, f"{name}.svg")
+        open(path, "w").write(svg(fn()))
+        png = path.replace(".svg", ".png")
+        subprocess.run(["rsvg-convert", "-w", "512", "-h", "512", path, "-o", png], check=True)
+        pngs.append(png)
+    ims = [Image.open(p).convert("RGBA") for p in pngs]
+    sheet = Image.new("RGB", (512 * 3 + 80, 592), (158, 160, 246))
+    for i, im in enumerate(ims): sheet.paste(im, (20 + 532 * i, 40), im)
+    sheet.save(os.path.join(OUT, "preview-eye.png"))
     print("ok")
