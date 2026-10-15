@@ -1,3 +1,5 @@
+<img src="docs/icon.png" alt="Spice logo: a blue eye with its pupil cut out, over an orange dune line" width="128" align="right" />
+
 # Spice
 
 A Jellyfin client for Android with iOS-style liquid glass, in the same minimal style as [Seekur](https://github.com/everettpenne/DuneDdit).

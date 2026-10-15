@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The same mark in one colour, for Android's themed icons: the eye with its pupil cut out, and the dune line. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:pathData="M38,62C34,70 42,75 38,83C36,88 39,91 37,96" android:strokeWidth="1.7" android:strokeAlpha="1.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
-    <path android:pathData="M47,63C43,71 51,77 47,85C45,90 48,93 46,98" android:strokeWidth="1.7" android:strokeAlpha="1.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
-    <path android:pathData="M61,63C65,71 57,77 61,85C63,90 60,93 62,98" android:strokeWidth="1.7" android:strokeAlpha="1.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
-    <path android:pathData="M70,62C74,70 66,75 70,83C72,88 69,91 71,96" android:strokeWidth="1.7" android:strokeAlpha="1.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
-    <path android:pathData="M54,62C51,69 57,73 54,80" android:strokeWidth="2.2" android:strokeAlpha="1.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
-    <path android:pathData="M29,58C29,40 40,28 54,28C68,28 79,40 79,58C75,63 71,63 67,58C63,63 59,63 54,58C49,63 45,63 41,58C37,63 33,63 29,58Z" android:strokeWidth="2.6" android:strokeAlpha="1.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
-    <path android:pathData="M37,50C38,41 45,35 54,35" android:strokeWidth="1.6" android:strokeAlpha="1.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
+    <path android:pathData="M26.67,58.89C26.19,49.41 36.45,37.94 50.76,37.80C65.34,37.66 79.65,46.58 81.67,58.99C81.94,62.91 80.73,66.15 78.30,66.39C70.51,65.95 64.95,59.83 56.47,61.17C46.84,62.69 38.48,53.97 26.67,58.89ZM44.01,51.84C44.01,44.98 48.48,39.42 54.00,39.42C59.52,39.42 63.99,44.98 63.99,51.84C63.99,58.70 59.52,64.26 54.00,64.26C48.48,64.26 44.01,58.70 44.01,51.84Z" android:fillType="evenOdd" android:fillColor="#FF000000"/>
+    <path android:pathData="M26.67,61.46C38.48,56.53 46.84,65.25 56.46,63.73C66.09,62.21 71.96,70.31 81.59,68.79" android:strokeWidth="2.82" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000"/>
 </vector>
