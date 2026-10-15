@@ -22,7 +22,7 @@ def defs(cw):
     return (f'<linearGradient id="bg" x1="0" y1="0" x2="0" y2="108" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#303033"/><stop offset="1" stop-color="#0F0F11"/></linearGradient>'
             f'<linearGradient id="ln" x1="46" y1="30" x2="104" y2="104" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="{a}"/><stop offset=".5" stop-color="{b}"/><stop offset="1" stop-color="{c}"/></linearGradient>'
             f'<linearGradient id="sp" x1="0" y1="40" x2="0" y2="66" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="{SPICE[0]}"/><stop offset="1" stop-color="{SPICE[1]}"/></linearGradient>'
-            f'<radialGradient id="iris" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7FD3FF"/><stop offset=".6" stop-color="#1B93E0"/><stop offset="1" stop-color="#0B4FA8"/></radialGradient>')
+            f'<linearGradient id="eyeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A5E4FF"/><stop offset="1" stop-color="#1B93E0"/></linearGradient><radialGradient id="iris" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7FD3FF"/><stop offset=".6" stop-color="#1B93E0"/><stop offset="1" stop-color="#0B4FA8"/></radialGradient>')
 
 L = 'stroke="url(#ln)" stroke-linecap="round" stroke-linejoin="round"'
 
@@ -30,6 +30,15 @@ def circ(cx, cy, r): return f"M{cx-r:.2f},{cy:.2f}a{r},{r} 0 1,0 {2*r},0a{r},{r}
 def spark(cx, cy, r):
     k = r * .2
     return f"M{cx},{cy-r}C{cx+k},{cy-k} {cx+k},{cy-k} {cx+r},{cy}C{cx+k},{cy+k} {cx+k},{cy+k} {cx},{cy+r}C{cx-k},{cy+k} {cx-k},{cy+k} {cx-r},{cy}C{cx-k},{cy-k} {cx-k},{cy-k} {cx},{cy-r}Z"
+
+# The cat's eye from the Lurkur mark: a half-lens with a straight inner edge and a bulging outer edge, tops slanted. Drawn with the inner edge at x=0 and
+# the eye bulging to the left; the right eye is its mirror image.
+CAT_EYE = "M0,0C-26,2 -54,30 -48,58C-44,76 -26,86 -2,85Q3,42 0,0Z"
+
+def cat_eyes(inner_left, inner_right, top, scale, fill="url(#eyeg)"):
+    """Both eyes: the left one bulging left of inner_left, the right one (mirrored) bulging right of inner_right."""
+    return (f'<path d="{CAT_EYE}" transform="translate({inner_left},{top}) scale({scale})" fill="{fill}"/>'
+            f'<path d="{CAT_EYE}" transform="translate({inner_right},{top}) scale({-scale},{scale})" fill="{fill}"/>')
 
 # ---------------------------------------------------------------- icons: a character looking in from the bottom right
 def eye_icon():
@@ -56,6 +65,16 @@ def bag_icon():
     s += f'<path d="{spark(82,99,6.5)}" fill="#FFFFFF"/>'
     for d, w in (("M68,60C58,55 48,55 38,59", 2.6), ("M68,66C58,66 48,69 40,75", 2.4), ("M70,54C62,48 54,44 46,42", 2.2)):
         s += f'<path d="{d}" fill="none" stroke="#EDA469" stroke-width="{w}" stroke-linecap="round" stroke-dasharray="0.01 4.6"/>'
+    return s
+
+def dune_icon():
+    """Two blue eyes (the cat's, from the Lurkur mark) peering over the crest of a dune, with soft ripples in the sand below. No ears, no whiskers."""
+    crest = "M6,96C30,80 52,90 74,78C90,69 104,72 118,62"
+    s = cat_eyes(74, 94, 51, .25)
+    s += f'<path d="{crest}L118,122L6,122Z" fill="{INK}"/>'                         # the dune hides the lower part of the eyes
+    s += f'<path d="{crest}" fill="none" {L} stroke-width="3.2"/>'
+    for d, w, o in (("M14,106C34,95 54,102 76,92C90,86 102,88 116,80", 2.2, .6), ("M30,116C48,108 62,112 80,104C92,99 104,101 118,95", 1.8, .38)):
+        s += f'<path d="{d}" fill="none" {L} stroke-width="{w}" stroke-opacity="{o}"/>'
     return s
 
 def icon_svg(fn, cw):
@@ -86,6 +105,16 @@ def bag_glyph():
         g += f'<path d="{d}" fill="none" stroke="#E8985C" stroke-width="{w}" stroke-linecap="round" stroke-dasharray="0.01 5.2"/>'
     return g, (-8, 18, 100, 78)
 
+def dune_glyph():
+    """A solid black dune: a sharp crest and steep face on the left, a long gentle slope down to the right; cut off flat at the bottom and the right like
+    the cat is. The cat's blue eyes sit in it, and a few quiet ripples are cut out of its lower slope."""
+    dune = "M4,92C6,64 16,44 34,28C44,44 62,54 92,58L92,92Z"
+    g = f'<path d="{dune}" fill="#000"/>'
+    g += cat_eyes(54, 71, 52, .22)
+    for d, w in (("M12,80C30,76 52,82 82,72", 2.4), ("M10,88C28,85 54,90 88,80", 2.2)):
+        g += f'<path d="{d}" fill="none" stroke="#A9AAF6" stroke-width="{w}" stroke-linecap="round" stroke-opacity=".7"/>'
+    return g, (-4, 22, 100, 74)
+
 def lockup(glyph_fn, name):
     body, (x0, y0, w, h) = glyph_fn()
     gh = 300; sc = gh / h; gw = int(w * sc)
@@ -108,7 +137,7 @@ def lockup(glyph_fn, name):
     return bg
 
 if __name__ == "__main__":
-    for name, icon, glyph in (("eye", eye_icon, eye_glyph), ("bag", bag_icon, bag_glyph)):
+    for name, icon, glyph in (("eye", eye_icon, eye_glyph), ("bag", bag_icon, bag_glyph), ("dune", dune_icon, dune_glyph)):
         sheet = lockup(glyph, name); icons = []
         for cw in COLORWAYS:
             p = os.path.join(OUT, f"peek-{name}-{cw}.svg"); open(p, "w").write(icon_svg(icon, cw))
