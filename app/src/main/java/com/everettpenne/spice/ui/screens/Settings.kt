@@ -1,5 +1,6 @@
 package com.everettpenne.spice.ui.screens
 
+import com.everettpenne.updater.collectStatus
 import com.everettpenne.glass.GlassAlert
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,6 +60,7 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit) {
                 }
             }
             Group("About") {
+                com.everettpenne.updater.LocalUpdater.current?.let { u -> NavRow(androidx.compose.material.icons.Icons.Rounded.SystemUpdate, "Check for Updates", u.collectStatus()) { u.onSettingsRowClick() } }
                 Row("Spice ${BuildConfig.VERSION_NAME}", Icons.Rounded.Info, "A Jellyfin client with iOS-style liquid glass")
                 NavRow(Icons.Rounded.Code, "Jellyfin", "Spice talks to your own Jellyfin server; nothing goes anywhere else") {
                     context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/jellyfin")))

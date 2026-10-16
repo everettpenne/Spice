@@ -34,6 +34,10 @@ object Routes {
 @Composable
 fun SpiceRoot() {
     SpiceTheme {
+        val updater = com.everettpenne.updater.Updater.get(LocalContext.current, com.everettpenne.updater.UpdateConfig("everettpenne/Spice", com.everettpenne.spice.BuildConfig.VERSION_NAME))
+        // Debug builds skip the launch check so the emulator tests never meet a dialog; Settings > Check for Updates still works there.
+        LaunchedEffect(Unit) { if (!com.everettpenne.spice.BuildConfig.DEBUG) updater.checkOnLaunch() }
+        com.everettpenne.updater.UpdateDialog(updater, "Spice")
         val graph = LocalContext.current.graph
         val session by graph.sessions.session.collectAsState()
         val navController = rememberNavController()
@@ -62,7 +66,7 @@ fun SpiceRoot() {
             GlassTabBar(Tab.bar, selected = lastTab, search = Tab.Search, onSelect = { tab -> navController.navigate(tab.route) { popUpTo(Routes.HOME) { inclusive = false }; launchSingleTop = true } })
         }) else null
 
-        CompositionLocalProvider(LocalTabBar provides tabBar) {
+        CompositionLocalProvider(com.everettpenne.updater.LocalUpdater provides updater, LocalTabBar provides tabBar) {
             // The plain page colour is also a glass backdrop, recorded in a sibling of the screens: recording the screens themselves would make
             // any glass control inside them sample a layer that contains it, which sends the renderer into endless recursion.
             val pageBackdrop = com.kyant.backdrop.backdrops.rememberLayerBackdrop()
