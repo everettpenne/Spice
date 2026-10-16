@@ -1,5 +1,7 @@
 package com.everettpenne.spice.ui.screens
 
+import com.everettpenne.spice.ui.glass.GlassSlider
+import com.everettpenne.spice.ui.glass.pressSwell
 import android.Manifest
 import android.app.Activity
 import android.content.ComponentName
@@ -283,9 +285,8 @@ private fun PlayerControls(
         Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().then(safe).padding(horizontal = if (compact) 12.dp else 24.dp, vertical = if (compact) 0.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(formatClock(position), color = Color.White, style = MaterialTheme.typography.bodySmall)
-            Slider(value = scrub ?: if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f, onValueChange = onScrub, onValueChangeFinished = onScrubDone,
-                modifier = Modifier.weight(1f).semantics { contentDescription = "Seek" },
-                colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = Spice.accent, inactiveTrackColor = Color.White.copy(alpha = .3f)))
+            GlassSlider(value = scrub ?: if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f, onValueChange = onScrub, onValueChangeFinished = onScrubDone,
+                modifier = Modifier.weight(1f), trackColor = Color.White.copy(alpha = .3f), description = "Seek")
             Text("-" + formatClock((duration - position).coerceAtLeast(0)), color = Color.White, style = MaterialTheme.typography.bodySmall)
             Icon(if (landscape) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen, if (landscape) "Exit full screen" else "Full screen", tint = Color.White,
                 modifier = Modifier.size(40.dp).clickable(onClick = onFullscreen).padding(8.dp))
@@ -296,7 +297,7 @@ private fun PlayerControls(
 @Composable
 private fun PlayerButton(icon: ImageVector, description: String, onClick: () -> Unit, size: Int = 44) {
     // At least 48dp to touch, whatever the drawn size.
-    Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).size(size.coerceAtLeast(48).dp).clickable(onClick = onClick).semantics { contentDescription = description }, Alignment.Center) {
+    Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).size(size.coerceAtLeast(48).dp).pressSwell().clickable(interactionSource = null, indication = null, onClick = onClick).semantics { contentDescription = description }, Alignment.Center) {
         Box(Modifier.size(size.dp).background(Color.Black.copy(alpha = .4f), CircleShape), Alignment.Center) { Icon(icon, null, tint = Color.White, modifier = Modifier.size((size * .55f).dp)) }
     }
 }

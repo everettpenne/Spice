@@ -1,5 +1,6 @@
 package com.everettpenne.spice.ui.screens
 
+import com.everettpenne.spice.ui.glass.GlassAlert
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -66,17 +67,8 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit) {
             Text("Spice is an independent app and is not affiliated with the Jellyfin project.", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 8.dp))
         }
-        if (confirmSignOut) GlassSheet({ confirmSignOut = false }) {
-            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text("Sign out of ${session?.serverName?.ifEmpty { "this server" } ?: "this server"}?", style = MaterialTheme.typography.titleLarge)
-                Text("This ends the session on the server and removes it from this phone.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                GlassButton("Sign Out", {
-                    confirmSignOut = false
-                    scope.launch { graph.api.logout(); graph.sessions.signOut(); onSignedOut() }
-                }, Modifier.fillMaxWidth(), prominent = true)
-                GlassButton("Cancel", { confirmSignOut = false }, Modifier.fillMaxWidth())
-            }
-        }
+        if (confirmSignOut) GlassAlert("Sign out of ${session?.serverName?.ifEmpty { "this server" } ?: "this server"}?", "This ends the session on the server and removes it from this phone.", "Sign Out",
+            { confirmSignOut = false; scope.launch { graph.api.logout(); graph.sessions.signOut(); onSignedOut() } }, { confirmSignOut = false }, destructive = true)
     }
 }
 
