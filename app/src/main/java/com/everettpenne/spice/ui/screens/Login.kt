@@ -19,9 +19,9 @@ import com.everettpenne.spice.data.api.ApiResult
 import com.everettpenne.spice.data.model.PublicInfo
 import com.everettpenne.spice.graph
 import com.everettpenne.spice.ui.components.GlassTextField
-import com.everettpenne.spice.ui.glass.GlassButton
-import com.everettpenne.spice.ui.glass.GlassScreen
-import com.everettpenne.spice.ui.glass.GlassTopBar
+import com.everettpenne.glass.GlassButton
+import com.everettpenne.glass.GlassScreen
+import com.everettpenne.glass.GlassTopBar
 import com.everettpenne.spice.ui.theme.Spice
 import kotlinx.coroutines.launch
 

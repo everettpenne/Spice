@@ -28,7 +28,7 @@ import com.everettpenne.spice.data.api.Failure
 import com.everettpenne.spice.data.model.JfItem
 import com.everettpenne.spice.graph
 import com.everettpenne.spice.ui.components.*
-import com.everettpenne.spice.ui.glass.*
+import com.everettpenne.glass.*
 
 /** The Library tab: favourites, then each library as a wide tile with its own artwork. */
 @Composable

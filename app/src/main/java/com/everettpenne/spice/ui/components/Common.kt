@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.everettpenne.spice.data.api.ApiResult
 import com.everettpenne.spice.data.api.Failure
-import com.everettpenne.spice.ui.glass.GlassButton
-import com.everettpenne.spice.ui.glass.glassPalette
-import com.everettpenne.spice.ui.glass.glassSurface
-import com.everettpenne.spice.ui.glass.frostedGlass
+import com.everettpenne.glass.GlassButton
+import com.everettpenne.glass.glassPalette
+import com.everettpenne.glass.glassSurface
+import com.everettpenne.glass.frostedGlass
 
 /** Where a tap on an item goes. Pure callbacks, so screens do not know about navigation. */
 interface Navigator {

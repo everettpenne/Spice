@@ -18,7 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.everettpenne.spice.graph
 import com.everettpenne.spice.ui.components.Navigator
-import com.everettpenne.spice.ui.glass.*
+import com.everettpenne.glass.*
 import com.everettpenne.spice.ui.screens.*
 import com.everettpenne.spice.ui.theme.SpiceTheme
 import com.kyant.backdrop.backdrops.layerBackdrop
@@ -59,7 +59,7 @@ fun SpiceRoot() {
         LaunchedEffect(route) { tabs[route]?.let { lastTab = it } }
         val hideTabs = route == Routes.LOGIN || route?.startsWith("play/") == true
         val tabBar: (@Composable () -> Unit)? = if (!hideTabs && signedIn) ({
-            GlassTabBar(selected = lastTab, onSelect = { tab -> navController.navigate(tab.route) { popUpTo(Routes.HOME) { inclusive = false }; launchSingleTop = true } })
+            GlassTabBar(Tab.bar, selected = lastTab, search = Tab.Search, onSelect = { tab -> navController.navigate(tab.route) { popUpTo(Routes.HOME) { inclusive = false }; launchSingleTop = true } })
         }) else null
 
         CompositionLocalProvider(LocalTabBar provides tabBar) {

@@ -1,7 +1,7 @@
 package com.everettpenne.spice.ui.screens
 
-import com.everettpenne.spice.ui.glass.GlassSlider
-import com.everettpenne.spice.ui.glass.pressSwell
+import com.everettpenne.glass.GlassSlider
+import com.everettpenne.glass.pressSwell
 import android.Manifest
 import android.app.Activity
 import android.content.ComponentName
@@ -61,9 +61,9 @@ import com.everettpenne.spice.graph
 import com.everettpenne.spice.playback.PlaybackMeta
 import com.everettpenne.spice.playback.PlaybackService
 import com.everettpenne.spice.ui.components.*
-import com.everettpenne.spice.ui.glass.GlassButton
-import com.everettpenne.spice.ui.glass.GlassSheet
-import com.everettpenne.spice.ui.theme.IosType
+import com.everettpenne.glass.GlassButton
+import com.everettpenne.glass.GlassSheet
+import com.everettpenne.glass.IosType
 import com.everettpenne.spice.ui.theme.Spice
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -342,7 +342,7 @@ private fun PlayerInfo(item: JfItem, nav: Navigator, onSwitch: (String) -> Unit,
         if (item.isEpisode) {
             if (seasonList.size > 1) item {
                 LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(seasonList, key = { it.id }) { s -> com.everettpenne.spice.ui.glass.GlassChip(s.id == seasonId, { chosenSeason = s.id }) { Text(s.name) } }
+                    items(seasonList, key = { it.id }) { s -> com.everettpenne.glass.GlassChip(s.id == seasonId, { chosenSeason = s.id }) { Text(s.name) } }
                 }
             }
             (episodes.state as? Load.Done)?.value?.let { eps -> items(eps, key = { it.id }) { ep -> EpisodeRow(ep, { if (ep.id != item.id) onSwitch(ep.id) }, current = ep.id == item.id) } }

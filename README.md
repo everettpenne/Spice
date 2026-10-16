@@ -31,6 +31,8 @@ Spice is an independent app and is not affiliated with the Jellyfin project. It 
 
 ## Build
 
+The liquid-glass UI kit (components, theme, type scale) is the separate `Glass` project, pulled in with a Gradle `includeBuild("../Glass")`, so it must be checked out next to this folder.
+
 ```bash
 ./gradlew :app:assembleDebug     # needs a JDK 21 and the Android SDK (compileSdk 36); minSdk 31
 ./gradlew :app:testDebugUnitTest # JVM tests with a mock server

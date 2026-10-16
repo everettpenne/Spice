@@ -27,8 +27,8 @@ import com.everettpenne.spice.data.api.ApiResult
 import com.everettpenne.spice.data.model.JfItem
 import com.everettpenne.spice.graph
 import com.everettpenne.spice.ui.components.*
-import com.everettpenne.spice.ui.glass.*
-import com.everettpenne.spice.ui.theme.IosType
+import com.everettpenne.glass.*
+import com.everettpenne.glass.IosType
 import com.everettpenne.spice.ui.theme.Spice
 import kotlinx.coroutines.launch
 

@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.everettpenne.spice.data.model.JfItem
 import com.everettpenne.spice.graph
-import com.everettpenne.spice.ui.theme.IosType
+import com.everettpenne.glass.IosType
 import com.everettpenne.spice.ui.theme.Spice
 
 /** A picture from the server, or a quiet placeholder while it loads or when the item has none. */

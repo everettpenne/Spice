@@ -1,6 +1,6 @@
 package com.everettpenne.spice.ui.screens
 
-import com.everettpenne.spice.ui.glass.GlassAlert
+import com.everettpenne.glass.GlassAlert
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,7 +23,7 @@ import com.everettpenne.spice.BuildConfig
 import com.everettpenne.spice.graph
 import com.everettpenne.spice.ui.components.bottomContentPadding
 import com.everettpenne.spice.ui.components.topContentPadding
-import com.everettpenne.spice.ui.glass.*
+import com.everettpenne.glass.*
 import com.everettpenne.spice.ui.theme.Spice
 import kotlinx.coroutines.launch
 

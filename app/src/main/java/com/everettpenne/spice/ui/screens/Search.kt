@@ -19,8 +19,8 @@ import com.everettpenne.spice.data.api.Failure
 import com.everettpenne.spice.data.model.JfItem
 import com.everettpenne.spice.graph
 import com.everettpenne.spice.ui.components.*
-import com.everettpenne.spice.ui.glass.GlassScreen
-import com.everettpenne.spice.ui.glass.GlassTopBar
+import com.everettpenne.glass.GlassScreen
+import com.everettpenne.glass.GlassTopBar
 import kotlinx.coroutines.delay
 
 /** Search movies, series and episodes. It searches as you type, after a short pause. The field sits at the bottom, above the keyboard or the tab bar. */

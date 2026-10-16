@@ -1,15 +1,11 @@
 package com.everettpenne.spice.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Shapes
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import com.everettpenne.glass.GlassColors
+import com.everettpenne.glass.GlassTheme
 
-/** The iOS-style palette: system blue accent, grouped backgrounds, and "secondary" fills for cards. */
+/** Spice's brand colours; the theme, type scale and glass kit come from the shared Glass library. */
 object Spice {
     /** Jellyfin blue: tab selection, icons, buttons. */
     val accent = Color(0xFF00A4DC)
@@ -23,20 +19,6 @@ object Spice {
     val orange = Color(0xFFFF9F0A)
 }
 
-private val Light = lightColorScheme(
-    primary = Spice.accent, onPrimary = Color.White, background = Color(0xFFF2F2F7), surface = Color(0xFFF2F2F7), onBackground = Color(0xFF1C1C1E), onSurface = Color(0xFF1C1C1E),
-    surfaceVariant = Color.White, onSurfaceVariant = Color(0xFF6C6C70), outlineVariant = Color(0xFFD1D1D6), error = Spice.red)
-private val Dark = darkColorScheme(
-    primary = Spice.accent, onPrimary = Color.White, background = Color(0xFF000000), surface = Color(0xFF000000), onBackground = Color(0xFFF2F2F7), onSurface = Color(0xFFF2F2F7),
-    surfaceVariant = Color(0xFF1C1C1E), onSurfaceVariant = Color(0xFF98989D), outlineVariant = Color(0xFF38383A), error = Spice.red)
-
 @Composable
-fun SpiceTheme(content: @Composable () -> Unit) {
-    val scheme = if (isSystemInDarkTheme()) Dark else Light
-    MaterialTheme(colorScheme = scheme, typography = SpiceTypography,
-        shapes = Shapes(small = androidx.compose.foundation.shape.RoundedCornerShape(8.dp), medium = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-            large = androidx.compose.foundation.shape.RoundedCornerShape(24.dp))) {
-        // Text outside a Material surface takes this colour. Without it, titles and settings rows were black on the black dark-mode page.
-        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides scheme.onBackground, content = content)
-    }
-}
+fun SpiceTheme(content: @Composable () -> Unit) =
+    GlassTheme(GlassColors(accent = Spice.accent, red = Spice.red, green = Spice.green), content)

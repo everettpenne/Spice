@@ -14,7 +14,7 @@ import com.everettpenne.spice.data.api.ApiResult
 import com.everettpenne.spice.data.model.JfItem
 import com.everettpenne.spice.graph
 import com.everettpenne.spice.ui.components.*
-import com.everettpenne.spice.ui.glass.*
+import com.everettpenne.glass.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
