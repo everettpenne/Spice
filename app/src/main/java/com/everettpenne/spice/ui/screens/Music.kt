@@ -63,8 +63,8 @@ fun MusicScreen(nav: Navigator) {
             ApiResult.Ok(libraries)
         }
     }
-    GlassScreen(bars = { GlassTopBar("Music", Modifier.align(Alignment.TopCenter)) }) {
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = topContentPadding() + 8.dp, bottom = bottomContentPadding()),
+    GlassScreen(bars = { GlassTopBar("Music", Modifier.align(Alignment.TopCenter)) }) { contentPadding ->
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding()),
             verticalArrangement = Arrangement.spacedBy(26.dp)) {
             when (val s = load.state) {
                 Load.Loading -> item { LoadingRow() }
@@ -139,7 +139,7 @@ private fun ArtistBody(artist: JfItem, nav: Navigator) {
     val graph = LocalContext.current.graph
     val albums = rememberLoad(artist.id) { graph.api.albumsByArtist(artist.id) }
     LazyVerticalGrid(GridCells.Adaptive(140.dp), Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = topContentPadding() + 8.dp, bottom = bottomContentPadding(), start = 16.dp, end = 16.dp),
+        contentPadding = PaddingValues(top = contentTopPadding() + 8.dp, bottom = contentBottomPadding(), start = 16.dp, end = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -184,7 +184,7 @@ private fun AlbumBody(album: JfItem) {
         controller?.let { AudioQueue.play(it, tracks, graph.urls, startIndex = start, shuffle = shuffle) }
     }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = topContentPadding(), bottom = bottomContentPadding()),
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = contentTopPadding(), bottom = contentBottomPadding()),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -192,8 +192,10 @@ private fun AlbumBody(album: JfItem) {
                     ItemImage(graph.urls.poster(album, 600), Modifier.fillMaxSize(), album.name, placeholderIcon = Icons.Rounded.Album)
                 }
                 Text(album.name, style = IosType.title1.copy(fontWeight = FontWeight.Bold), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                val facts = listOfNotNull(album.musicArtist, album.year?.toString()).joinToString(" · ")
+                val facts = listOfNotNull(album.musicArtist, album.year?.toString(), album.genres.firstOrNull()).joinToString(" · ")
                 if (facts.isNotEmpty()) Text(facts, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (tracks.isNotEmpty()) Text("${tracks.size} ${if (tracks.size == 1) "track" else "tracks"} · ${formatTotalRuntime(tracks.sumOf { it.runtimeSeconds ?: 0 })}",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (tracks.isNotEmpty()) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         GlassButton({ play() }, Modifier.weight(1f), prominent = true) { Icon(Icons.Rounded.PlayArrow, null); Text("Play") }
@@ -234,4 +236,14 @@ fun TrackRow(track: JfItem, playing: Boolean, onClick: () -> Unit) {
 internal fun formatTrackTime(seconds: Long): String {
     val s = seconds.coerceAtLeast(0)
     return if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
+}
+
+/** "45s", "8m", or "1h 4m" for an album's total running time. */
+private fun formatTotalRuntime(seconds: Long): String {
+    val s = seconds.coerceAtLeast(0)
+    return when {
+        s < 60 -> "${s}s"
+        s < 3600 -> "${s / 60}m"
+        else -> "${s / 3600}h ${s / 60 % 60}m"
+    }
 }

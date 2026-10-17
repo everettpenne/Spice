@@ -1,12 +1,13 @@
 package com.everettpenne.spice.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -23,7 +24,7 @@ import com.everettpenne.glass.GlassScreen
 import com.everettpenne.glass.GlassTopBar
 import kotlinx.coroutines.delay
 
-/** Search movies, series and episodes. It searches as you type, after a short pause. The field sits at the bottom, above the keyboard or the tab bar. */
+/** Search movies, shows, episodes, albums and artists. It searches as you type, after a short pause, and groups what it finds by kind. */
 @Composable
 fun SearchScreen(nav: Navigator) {
     val graph = LocalContext.current.graph
@@ -46,20 +47,47 @@ fun SearchScreen(nav: Navigator) {
         loading = false
     }
 
+    val groups = remember(results) {
+        listOf(
+            "Movies" to results.filter { it.type == "Movie" || it.type == "BoxSet" },
+            "Shows" to results.filter { it.type == "Series" },
+            "Episodes" to results.filter { it.type == "Episode" },
+            "Albums" to results.filter { it.type == "MusicAlbum" },
+            "Artists" to results.filter { it.type == "MusicArtist" },
+        ).filter { it.second.isNotEmpty() }
+    }
+
     GlassScreen(bars = {
         GlassTopBar("Search", Modifier.align(Alignment.TopCenter))
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().imePadding().padding(horizontal = 16.dp)
             .padding(bottom = if (imeVisible) 8.dp else 92.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) {
             GlassTextField(query, { query = it }, "Movies, shows, music", leading = Icons.Rounded.Search, imeAction = ImeAction.Search)
         }
-    }) {
-        LazyVerticalGrid(GridCells.Adaptive(112.dp), Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = topContentPadding(), bottom = 220.dp, start = 16.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (loading) item(span = { GridItemSpan(maxLineSpan) }) { LoadingRow() }
-            failure?.let { f -> item(span = { GridItemSpan(maxLineSpan) }) { ErrorState(f) { retry++ } } }
-            items(results, key = { it.id }) { PosterCard(it, nav) }
-            if (!loading && failure == null && query.isNotBlank() && results.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { EmptyState(Icons.Rounded.Search, "No results", "Try a different search.") }
+    }) { contentPadding ->
+        LazyColumn(Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = contentPadding.calculateTopPadding(), bottom = 220.dp),
+            verticalArrangement = Arrangement.spacedBy(22.dp)) {
+            if (loading) item { LoadingRow() }
+            failure?.let { f -> item { ErrorState(f) { retry++ } } }
+            groups.forEach { (title, group) -> item(key = title) { SearchShelf(title, group, nav) } }
+            if (!loading && failure == null && query.isNotBlank() && results.isEmpty()) item { EmptyState(Icons.Rounded.Search, "No results", "Try a different search.") }
+        }
+    }
+}
+
+/** One titled row of a search group, drawn with the card shape that suits the kind: posters for video, squares for albums, circles for artists. */
+@Composable
+private fun SearchShelf(title: String, items: List<JfItem>, nav: Navigator) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 20.dp))
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(items, key = { it.id }) { item ->
+                when (item.type) {
+                    "MusicAlbum" -> AlbumCard(item, nav, Modifier.width(140.dp))
+                    "MusicArtist" -> ArtistCircle(item, nav)
+                    else -> PosterCard(item, nav, Modifier.width(126.dp))
+                }
+            }
         }
     }
 }

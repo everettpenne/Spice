@@ -36,8 +36,8 @@ fun LibraryScreen(nav: Navigator) {
     val graph = LocalContext.current.graph
     val session by graph.sessions.session.collectAsState()
     val load = rememberLoad(session?.userId) { graph.api.libraries() }
-    GlassScreen(bars = { GlassTopBar("Library", Modifier.align(Alignment.TopCenter)) }) {
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = topContentPadding() + 8.dp, bottom = bottomContentPadding(), start = 16.dp, end = 16.dp),
+    GlassScreen(bars = { GlassTopBar("Library", Modifier.align(Alignment.TopCenter)) }) { contentPadding ->
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding(), start = 16.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { LibraryTile("Favorites", Icons.Rounded.Favorite, null) { nav.openBrowse(null, "Favorites", filter = "IsFavorite") } }
             when (val s = load.state) {
@@ -104,9 +104,9 @@ fun BrowseScreen(parentId: String?, title: String, types: String?, filter: Strin
         }
     }
 
-    GlassScreen(bars = { GlassCenteredTopBar(title, onBack, Modifier.align(Alignment.TopCenter)) }) {
+    GlassScreen(bars = { GlassCenteredTopBar(title, onBack, Modifier.align(Alignment.TopCenter)) }) { contentPadding ->
         LazyVerticalGrid(GridCells.Adaptive(112.dp), Modifier.fillMaxSize(), state = gridState,
-            contentPadding = PaddingValues(top = topContentPadding() + 8.dp, bottom = bottomContentPadding(), start = 16.dp, end = 16.dp),
+            contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding(), start = 16.dp, end = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { items(Sort.entries) { s -> GlassChip(sort == s, { sort = s }) { Text(s.label) } } }

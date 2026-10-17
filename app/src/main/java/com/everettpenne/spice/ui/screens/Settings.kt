@@ -22,8 +22,6 @@ import androidx.compose.ui.unit.dp
 import coil3.SingletonImageLoader
 import com.everettpenne.spice.BuildConfig
 import com.everettpenne.spice.graph
-import com.everettpenne.spice.ui.components.bottomContentPadding
-import com.everettpenne.spice.ui.components.topContentPadding
 import com.everettpenne.glass.*
 import com.everettpenne.spice.ui.theme.Spice
 import kotlinx.coroutines.launch
@@ -40,8 +38,8 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit) {
     var confirmSignOut by remember { mutableStateOf(false) }
     var cacheBytes by remember { mutableStateOf(SingletonImageLoader.get(context).diskCache?.size ?: 0L) }
 
-    GlassScreen(bars = { GlassCenteredTopBar("Settings", onBack, Modifier.align(Alignment.TopCenter)) }) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = topContentPadding(), bottom = bottomContentPadding(), start = 16.dp, end = 16.dp),
+    GlassScreen(bars = { GlassCenteredTopBar("Settings", onBack, Modifier.align(Alignment.TopCenter)) }) { contentPadding ->
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = contentPadding.calculateTopPadding(), bottom = contentPadding.calculateBottomPadding(), start = 16.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(22.dp)) {
             Group("Server") {
                 Row(session?.let { "${it.serverName.ifEmpty { "Jellyfin" }}" } ?: "Not signed in", Icons.Rounded.Dns, session?.serverUrl)

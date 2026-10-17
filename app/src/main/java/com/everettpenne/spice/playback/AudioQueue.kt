@@ -33,7 +33,10 @@ object AudioQueue {
             .setArtist(track.musicArtist)
             .setAlbumTitle(track.album)
             .setExtras(PlaybackMeta.extras(track.id, sourceId ?: "", "DirectStream", sessionId, itemType = "Audio"))
-            .apply { urls.poster(track, 600)?.let { setArtworkUri(Uri.parse(it)) } }
+            .apply {
+                track.runtimeSeconds?.let { setDurationMs(it * 1000) }
+                urls.poster(track, 600)?.let { setArtworkUri(Uri.parse(it)) }
+            }
             .build()
         return MediaItem.Builder().setMediaId(track.id).setUri(url).setMediaMetadata(metadata)
             .setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(Uri.parse(url)).build()).build()

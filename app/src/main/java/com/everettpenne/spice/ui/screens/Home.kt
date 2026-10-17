@@ -43,8 +43,8 @@ fun HomeScreen(nav: Navigator, onSettings: () -> Unit) {
         GlassTopBar("Home", Modifier.align(Alignment.TopCenter)) {
             GlassIconButton(Icons.Rounded.Settings, "Settings", onSettings, size = 48)
         }
-    }) {
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = topContentPadding() + 8.dp, bottom = bottomContentPadding()), verticalArrangement = Arrangement.spacedBy(26.dp)) {
+    }) { contentPadding ->
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding()), verticalArrangement = Arrangement.spacedBy(26.dp)) {
             when (val s = load.state) {
                 Load.Loading -> item { LoadingRow() }
                 is Load.Error -> item { ErrorState(s.failure, load.reload) }

@@ -67,7 +67,7 @@ private fun DetailBody(item: JfItem, nav: Navigator, onChanged: () -> Unit, scop
     val playTarget: JfItem? = when { item.isPlayable -> item; else -> episodeList.firstOrNull { !it.userData.played } ?: episodeList.firstOrNull() }
     val resumeTicks = playTarget?.userData?.positionTicks ?: 0
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = bottomContentPadding()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = contentBottomPadding()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Box(Modifier.fillMaxWidth().aspectRatio(16f / 10f)) {
                 ItemImage(graph.urls.backdrop(item), Modifier.fillMaxSize())
