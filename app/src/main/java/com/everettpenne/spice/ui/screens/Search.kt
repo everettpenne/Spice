@@ -39,7 +39,7 @@ fun SearchScreen(nav: Navigator) {
         if (query.isBlank()) { results = emptyList(); loading = false; return@LaunchedEffect }
         loading = true
         delay(350)
-        when (val r = graph.api.items(types = "Movie,Series,Episode,BoxSet", search = query.trim(), limit = 48, sortBy = "SortName")) {
+        when (val r = graph.api.items(types = "Movie,Series,Episode,BoxSet,MusicAlbum,MusicArtist", search = query.trim(), limit = 48, sortBy = "SortName")) {
             is ApiResult.Ok -> results = r.value.items
             is ApiResult.Failed -> failure = r.reason
         }
@@ -50,7 +50,7 @@ fun SearchScreen(nav: Navigator) {
         GlassTopBar("Search", Modifier.align(Alignment.TopCenter))
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().imePadding().padding(horizontal = 16.dp)
             .padding(bottom = if (imeVisible) 8.dp else 92.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())) {
-            GlassTextField(query, { query = it }, "Movies, shows, episodes", leading = Icons.Rounded.Search, imeAction = ImeAction.Search)
+            GlassTextField(query, { query = it }, "Movies, shows, music", leading = Icons.Rounded.Search, imeAction = ImeAction.Search)
         }
     }) {
         LazyVerticalGrid(GridCells.Adaptive(112.dp), Modifier.fillMaxSize(),

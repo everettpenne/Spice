@@ -67,7 +67,7 @@ const val TICKS_PER_SECOND = 10_000_000L
     @SerialName("Type") val type: String = "",
 )
 
-/** One thing in the library: a movie, a series, a season, an episode, a folder, a collection. The fields are the ones the screens use. */
+/** One thing in the library: a movie, a series, an episode, a folder, an album, an artist, a song. The fields are the ones the screens use. */
 @Serializable data class JfItem(
     @SerialName("Id") val id: String,
     @SerialName("Name") val name: String = "",
@@ -89,6 +89,11 @@ const val TICKS_PER_SECOND = 10_000_000L
     @SerialName("SeriesPrimaryImageTag") val seriesPrimaryTag: String? = null,
     @SerialName("SeasonId") val seasonId: String? = null,
     @SerialName("SeasonName") val seasonName: String? = null,
+    @SerialName("Artists") val artists: List<String> = emptyList(),
+    @SerialName("AlbumArtists") val albumArtists: List<String> = emptyList(),
+    @SerialName("Album") val album: String? = null,
+    @SerialName("AlbumId") val albumId: String? = null,
+    @SerialName("AlbumPrimaryImageTag") val albumPrimaryTag: String? = null,
     @SerialName("IndexNumber") val index: Int? = null,
     @SerialName("ParentIndexNumber") val parentIndex: Int? = null,
     @SerialName("ChildCount") val childCount: Int? = null,
@@ -100,7 +105,17 @@ const val TICKS_PER_SECOND = 10_000_000L
     val isSeries get() = type == "Series"
     val isSeason get() = type == "Season"
     val isPlayable get() = type == "Movie" || type == "Episode" || type == "Video" || type == "MusicVideo"
+    val isAudio get() = type == "Audio"
+    val isMusicAlbum get() = type == "MusicAlbum"
+    val isMusicArtist get() = type == "MusicArtist"
     val runtimeMinutes: Int? get() = runTimeTicks?.let { (it / TICKS_PER_SECOND / 60).toInt() }?.takeIf { it > 0 }
+    val runtimeSeconds: Long? get() = runTimeTicks?.let { it / TICKS_PER_SECOND }?.takeIf { it > 0 }
+
+    /** The artist name to show: the track's artist, falling back to the album artist. */
+    val musicArtist: String? get() = artists.firstOrNull() ?: albumArtists.firstOrNull()
+
+    /** "2" for a single-disc album track, "1-3" for disc 1 track 3 on a multi-disc album. */
+    val trackLabel: String? get() = if (isAudio && index != null) (if ((parentIndex ?: 0) > 0) "${parentIndex}-$index" else "$index") else null
 
     /** How far through it the person is, 0..1, or null when they have not started (or have finished). */
     val progress: Float? get() {

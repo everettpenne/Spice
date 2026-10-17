@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """A tiny stand-in for a Jellyfin server, enough for Spice's screens: sign in (demo / demo), libraries, shelves, search, seasons and
-episodes, generated artwork, a playable test video with HTTP range support, and playback reports (printed, so a test can see them).
+episodes, a music library (artists, albums and songs), generated artwork, a playable test video and audio file with HTTP range support,
+and playback reports (printed, so a test can see them).
 
     python3 tools/fake-jellyfin/server.py [port]      # default 8096; the emulator reaches it at http://10.0.2.2:8096
 
@@ -18,10 +19,12 @@ TICKS = 10_000_000
 
 DTS = os.path.join(HERE, "dts.mkv")
 HLS = os.path.join(HERE, "hls")
+AUDIO = os.path.join(HERE, "song.wav")
 
 def make_video():
     """Makes (once) the test media: test.mp4 (H.264 + AAC + a subtitle track, 40 s), dts.mkv (DTS audio, which a phone cannot decode, so Spice
-    must fall back to a transcode) and hls/ (what the server's transcode would send: H.264 + AAC segments)."""
+    must fall back to a transcode), hls/ (what the server's transcode would send: H.264 + AAC segments) and song.wav (a 10 s sine wave every
+    music track serves, written with the stdlib so it needs no ffmpeg)."""
     srt = os.path.join(HERE, "test.srt")
     open(srt, "w").write("1\n00:00:01,000 --> 00:00:06,000\nHello from the fake server\n\n2\n00:00:08,000 --> 00:00:14,000\nSubtitles work\n")
     run = lambda *a: subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *a], check=True)
@@ -33,6 +36,12 @@ def make_video():
         os.makedirs(HLS)
         run("-i", VIDEO, "-map", "0:v", "-map", "0:a", "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p", "-c:a", "aac", "-f", "hls", "-hls_time", "4",
             "-hls_playlist_type", "vod", "-hls_segment_filename", os.path.join(HLS, "seg%d.ts"), os.path.join(HLS, "index.m3u8"))
+    if not os.path.exists(AUDIO):
+        import math, struct, wave
+        rate, seconds, freq = 44100, 10, 440
+        w = wave.open(AUDIO, "w"); w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate)
+        w.writeframes(b"".join(struct.pack("<h", int(12000 * math.sin(2 * math.pi * freq * i / rate))) for i in range(rate * seconds)))
+        w.close()
 
 def item(id, name, type, **kw):
     d = {"Id": id, "Name": name, "Type": type, "ImageTags": {"Primary": "p", "Thumb": "t"}, "BackdropImageTags": ["b"], "UserData": {"PlaybackPositionTicks": 0, "Played": False}}
@@ -67,6 +76,26 @@ for s, name in enumerate(["Severance", "Andor"]):
                      Overview=LOREM, RunTimeTicks=40 * TICKS, MediaSources=SRC(f"{sid}-{se}-{ep}"), SeriesPrimaryImageTag="p"))
 ITEMS["s0-1-2"]["UserData"] = {"PlaybackPositionTicks": 10 * TICKS, "PlayedPercentage": 25.0, "Played": False}
 ITEMS["s0-1-1"]["UserData"]["Played"] = True
+
+# Music: a library with artists, albums and songs (every song serves the same 10 s sine-wave wav), enough for the Music tab's screens.
+AUDIO_SRC = lambda id: [{"Id": "ms-" + id, "Container": "wav", "RunTimeTicks": 10 * TICKS, "SupportsDirectPlay": True, "SupportsDirectStream": True,
+                          "MediaStreams": [{"Type": "Audio", "Index": 0, "Codec": "pcm_s16le"}]}]
+ALBUM_ARTIST = {}   # album id -> artist item id, for the ArtistIds filter
+add(item("lib-mu", "Music", "CollectionFolder", CollectionType="music", IsFolder=True))
+_artist_names = ["Glass Animals", "Tame Impala", "Radiohead"]
+for a, name in enumerate(_artist_names):
+    add(item(f"ar{a}", name, "MusicArtist", ParentId="lib-mu", Overview=LOREM))
+_albums = [("Zaba", "ar0", 2014), ("Currents", "ar1", 2015), ("In Rainbows", "ar2", 2007)]
+for a, (album_name, artist_id, year) in enumerate(_albums):
+    aid = f"al{a}"; artist_name = ITEMS[artist_id]["Name"]
+    add(item(aid, album_name, "MusicAlbum", ParentId="lib-mu", ProductionYear=year, AlbumArtists=[artist_name], Artists=[artist_name],
+             Overview=LOREM, Genres=["Rock"], DateCreated=f"2026-0{a+1}-01"))
+    ALBUM_ARTIST[aid] = artist_id
+    for t in range(1, 6):
+        add(item(f"{aid}-t{t}", f"{album_name} — track {t}", "Audio", ParentId=aid, AlbumId=aid, Album=album_name,
+                 AlbumArtists=[artist_name], Artists=[artist_name], IndexNumber=t, RunTimeTicks=10 * TICKS,
+                 ImageTags={}, AlbumPrimaryImageTag="p", MediaSources=AUDIO_SRC(f"{aid}-t{t}")))
+
 favorites, REPORTS = set(), []
 
 def listing(items): return {"Items": items, "TotalRecordCount": len(items)}
@@ -102,10 +131,16 @@ class H(BaseHTTPRequestHandler):
             if m[1] == "FavoriteItems": (favorites.add if method == "POST" else favorites.discard)(m[2])
             else: ITEMS[m[2]]["UserData"]["Played"] = method == "POST"
             print("STATE", method, p, flush=True); return self.send(200, {})
-        if p.endswith("/Views"): return self.send(200, listing([ITEMS["lib-m"], ITEMS["lib-s"]]))
+        if p.endswith("/Views"): return self.send(200, listing([ITEMS["lib-m"], ITEMS["lib-s"], ITEMS["lib-mu"]]))
         if p.endswith("/Items/Resume"): return self.send(200, listing([ITEMS["m1"], ITEMS["s0-1-2"]]))
         if p == "/Shows/NextUp": return self.send(200, listing([ITEMS["s0-1-3"], ITEMS["s1-1-1"]]))
-        if p.endswith("/Items/Latest"): return self.send(200, [i for i in ITEMS.values() if i.get("ParentId") == q.get("ParentId")][:16])
+        if p.endswith("/Artists"):
+            pool = [i for i in ITEMS.values() if i["Type"] == "MusicArtist" and (not q.get("ParentId") or i.get("ParentId") == q["ParentId"])]
+            return self.send(200, listing(pool))
+        if p.endswith("/Items/Latest"):
+            pool = [i for i in ITEMS.values() if i.get("ParentId") == q.get("ParentId")]
+            if q.get("IncludeItemTypes"): pool = [i for i in pool if i["Type"] in q["IncludeItemTypes"].split(",")]
+            return self.send(200, pool[:16])
         m = re.match(r"/Shows/([^/]+)/Seasons", p)
         if m: return self.send(200, listing([i for i in ITEMS.values() if i["Type"] == "Season" and i["SeriesId"] == m[1]]))
         m = re.match(r"/Shows/([^/]+)/Episodes", p)
@@ -118,6 +153,7 @@ class H(BaseHTTPRequestHandler):
             pool = list(ITEMS.values())
             if q.get("ParentId"): pool = [i for i in pool if i.get("ParentId") == q["ParentId"]]
             if q.get("IncludeItemTypes"): pool = [i for i in pool if i["Type"] in q["IncludeItemTypes"].split(",")]
+            if q.get("ArtistIds"): pool = [i for i in pool if ALBUM_ARTIST.get(i["Id"]) in q["ArtistIds"].split(",")]
             if q.get("SearchTerm"): pool = [i for i in pool if q["SearchTerm"].lower() in i["Name"].lower()]
             if q.get("Filters") == "IsFavorite": pool = [i for i in pool if i["Id"] in favorites]
             if not q.get("ParentId") and not q.get("IncludeItemTypes") and not q.get("Filters"): pool = [i for i in pool if i["Type"] in ("Movie", "Series")]
@@ -126,6 +162,7 @@ class H(BaseHTTPRequestHandler):
             pool.sort(key=key, reverse=q.get("SortOrder") == "Descending")
             s, l = int(q.get("StartIndex", 0)), int(q.get("Limit", 60))
             return self.send(200, {"Items": pool[s:s + l], "TotalRecordCount": len(pool)})
+        if re.match(r"/Audio/[^/]+/(stream|universal)", p): return self.video(AUDIO, "audio/wav")
         m = re.match(r"/Videos/[^/]+/(stream|master\.m3u8)", p)
         if m and m[1] == "stream": return self.video(DTS if "/m6/" in p else VIDEO)
         if m: return self.send(200, open(os.path.join(HLS, "index.m3u8"), "rb").read(), "application/vnd.apple.mpegurl")
@@ -140,7 +177,7 @@ class H(BaseHTTPRequestHandler):
         for y in range(h): d.line([(0, y), (w, y)], fill=tuple(int(c) for c in __import__("colorsys").hsv_to_rgb(hue / 360, .55, .35 + .4 * y / h) and [x * 255 for x in __import__("colorsys").hsv_to_rgb(hue / 360, .55, .35 + .4 * y / h)]))
         d.text((16, 16), ITEMS.get(id, {}).get("Name", id), fill="white")
         buf = io.BytesIO(); img.save(buf, "JPEG"); return buf.getvalue()
-    def video(self, path):
+    def video(self, path, ctype="video/mp4"):
         size = os.path.getsize(path); rng = self.headers.get("Range"); start, end = 0, size - 1
         if rng and (m := re.match(r"bytes=(\d*)-(\d*)", rng)):
             if m[1]: start = int(m[1])
@@ -148,7 +185,7 @@ class H(BaseHTTPRequestHandler):
         with open(path, "rb") as f: f.seek(start); data = f.read(end - start + 1)
         extra = {"Accept-Ranges": "bytes"}
         if rng: extra["Content-Range"] = f"bytes {start}-{end}/{size}"
-        self.send(206 if rng else 200, data, "video/mp4", extra)
+        self.send(206 if rng else 200, data, ctype, extra)
 
 if __name__ == "__main__":
     make_video()

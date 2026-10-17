@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -29,11 +30,11 @@ import com.everettpenne.spice.graph
 import com.everettpenne.glass.IosType
 import com.everettpenne.spice.ui.theme.Spice
 
-/** A picture from the server, or a quiet placeholder while it loads or when the item has none. */
+/** A picture from the server, or a quiet placeholder while it loads or when the item has none. [placeholderIcon] is the glyph behind it. */
 @Composable
-fun ItemImage(url: String?, modifier: Modifier = Modifier, contentDescription: String? = null, placeholder: Boolean = true) {
+fun ItemImage(url: String?, modifier: Modifier = Modifier, contentDescription: String? = null, placeholder: Boolean = true, placeholderIcon: ImageVector = Icons.Rounded.Movie) {
     Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-        if (placeholder) Icon(Icons.Rounded.Movie, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .4f), modifier = Modifier.size(32.dp))
+        if (placeholder) Icon(placeholderIcon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .4f), modifier = Modifier.size(32.dp))
         if (url != null) AsyncImage(url, contentDescription, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
     }
 }
@@ -59,7 +60,14 @@ private fun BoxScope.CountBadge(count: Int?) {
 @Composable
 fun PosterCard(item: JfItem, nav: Navigator, modifier: Modifier = Modifier) {
     val urls = LocalContext.current.graph.urls
-    Column(modifier.clickable { nav.openItem(if (item.isEpisode) item.seriesId ?: item.id else item.id) }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier.clickable {
+        when {
+            item.isMusicAlbum -> nav.openAlbum(item.id)
+            item.isMusicArtist -> nav.openArtist(item.id)
+            item.isEpisode -> nav.openItem(item.seriesId ?: item.id)
+            else -> nav.openItem(item.id)
+        }
+    }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(14.dp))) {
             ItemImage(urls.poster(item, 360), Modifier.fillMaxSize(), item.name)
             ProgressStrip(item.progress)

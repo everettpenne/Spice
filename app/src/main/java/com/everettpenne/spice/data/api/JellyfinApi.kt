@@ -165,6 +165,30 @@ class JellyfinApi(private val client: OkHttpClient, private val session: () -> S
     suspend fun similar(id: String, limit: Int = 12): ApiResult<List<JfItem>> =
         get<ItemsResult>("Items/$id/Similar", "UserId" to userId, "Limit" to "$limit", "Fields" to listFields).map { it.items }
 
+    // ---- music --------------------------------------------------------------------------------------------------------------
+
+    /** The libraries that hold music (the "music" collection type), for the Music tab's landing. */
+    suspend fun musicLibraries(): ApiResult<List<JfItem>> = libraries().map { libs -> libs.filter { it.collectionType == "music" } }
+
+    /** The artists of a music library, from Jellyfin's Artists endpoint (a query result of MusicArtist items). */
+    suspend fun artists(libraryId: String, limit: Int = 200): ApiResult<List<JfItem>> = get<ItemsResult>("Artists",
+        "UserId" to userId, "ParentId" to libraryId, "SortBy" to "SortName", "SortOrder" to "Ascending", "Recursive" to "true",
+        "Limit" to "$limit", "Fields" to listFields).map { it.items }
+
+    /** The albums an artist appears on, newest first. */
+    suspend fun albumsByArtist(artistId: String): ApiResult<List<JfItem>> = get<ItemsResult>("Users/$userId/Items",
+        "ArtistIds" to artistId, "IncludeItemTypes" to "MusicAlbum", "Recursive" to "true", "SortBy" to "ProductionYear,SortName",
+        "SortOrder" to "Descending", "Fields" to listFields).map { it.items }
+
+    /** The newest albums in a music library. */
+    suspend fun latestAlbums(libraryId: String, limit: Int = 16): ApiResult<List<JfItem>> = get<List<JfItem>>("Users/$userId/Items/Latest",
+        "ParentId" to libraryId, "IncludeItemTypes" to "MusicAlbum", "Limit" to "$limit", "Fields" to listFields)
+
+    /** The tracks of an album, in disc/track order. */
+    suspend fun albumTracks(albumId: String): ApiResult<List<JfItem>> = get<ItemsResult>("Users/$userId/Items",
+        "ParentId" to albumId, "IncludeItemTypes" to "Audio", "SortBy" to "ParentIndexNumber,IndexNumber", "SortOrder" to "Ascending",
+        "Fields" to "$listFields,MediaSources").map { it.items }
+
     // ---- state changes ----------------------------------------------------------------------------------------------------
 
     suspend fun setPlayed(id: String, played: Boolean) = if (played) post("Users/$userId/PlayedItems/$id") else delete("Users/$userId/PlayedItems/$id")

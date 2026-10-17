@@ -8,7 +8,9 @@ Sign in to your own Jellyfin server, browse your libraries, and play from them. 
 - **Home:** Continue Watching, Next Up, and the latest in each library.
 - **Library:** your libraries and favourites; sort by name, date added, year or rating.
 - **Detail:** artwork, facts, Play/Resume, watched and favourite; seasons and episodes for a series.
-- **Search:** movies, series and episodes, as you type.
+- **Search:** movies, series, episodes, albums and artists, as you type.
+- **Music:** your music libraries as artists and latest albums; an artist's albums; an album's tracks with numbers and durations. Play and
+  Shuffle an album (or tap a track to play from it), with a now-playing screen and a mini-player above the tab bar while a song plays.
 - **Player:** rotates. Held upright, the video sits at the top and the details sit below it: title, year, rating, runtime, seasons, the
   season's other episodes (tap one to switch) and More Like This. Turned sideways (or with the full-screen button) it fills the screen.
   It plays the original file when the phone can, and asks the server to transcode when it can't (including a file whose audio the phone
@@ -18,7 +20,7 @@ Sign in to your own Jellyfin server, browse your libraries, and play from them. 
   even after background listening.
 - **Settings:** server and account, direct play or always transcode, play next episode, sign out.
 
-Not yet: Quick Connect, music, live TV, downloads, casting, picture-in-picture, external subtitle files, a queue across several titles.
+Not yet: Quick Connect, live TV, downloads, casting, picture-in-picture, external subtitle files, a queue across several titles.
 
 Spice is an independent app and is not affiliated with the Jellyfin project. It uses Jellyfin's public REST API.
 

@@ -129,4 +129,61 @@ class JellyfinApiTest {
         assertNull(urls.poster(JfItem("m", imageTags = ImageTags(primary = "t"))))
         assertNull(urls.directStream("m", "ms"))
     }
+
+    @Test fun `music endpoints hit their paths and parse their items`() = runBlocking {
+        server.enqueue(MockResponse().setBody("""{"Items":[{"Id":"ar0","Name":"Tame Impala","Type":"MusicArtist"}],"TotalRecordCount":1}"""))
+        val artists = api.artists("lib-mu") as ApiResult.Ok
+        assertEquals("Tame Impala", artists.value[0].name)
+        assertTrue(server.takeRequest().path!!.startsWith("/Artists"))
+
+        server.enqueue(MockResponse().setBody("""{"Items":[{"Id":"al1","Name":"Currents","Type":"MusicAlbum","AlbumArtists":["Tame Impala"],"Artists":["Tame Impala"]}],"TotalRecordCount":1}"""))
+        val albums = api.albumsByArtist("ar0") as ApiResult.Ok
+        assertEquals("Tame Impala", albums.value[0].musicArtist)
+        val byArtist = server.takeRequest().path!!
+        assertTrue(byArtist.startsWith("/Users/u1/Items") && byArtist.contains("ArtistIds=ar0") && byArtist.contains("IncludeItemTypes=MusicAlbum"))
+
+        server.enqueue(MockResponse().setBody("""[{"Id":"al1","Name":"Currents","Type":"MusicAlbum"}]"""))
+        val latest = api.latestAlbums("lib-mu") as ApiResult.Ok
+        assertEquals("Currents", latest.value[0].name)
+        assertTrue(server.takeRequest().path!!.contains("IncludeItemTypes=MusicAlbum"))
+
+        server.enqueue(MockResponse().setBody("""{"Items":[{"Id":"s1","Name":"Track 1","Type":"Audio","IndexNumber":1}],"TotalRecordCount":1}"""))
+        val tracks = api.albumTracks("al1") as ApiResult.Ok
+        assertEquals(1, tracks.value[0].index)
+        val albumTracks = server.takeRequest().path!!
+        assertTrue(albumTracks.startsWith("/Users/u1/Items") && albumTracks.contains("ParentId=al1") && albumTracks.contains("IncludeItemTypes=Audio"))
+    }
+
+    @Test fun `music libraries are only the music collection type`() = runBlocking {
+        server.enqueue(MockResponse().setBody("""{"Items":[{"Id":"lib-m","Name":"Movies","Type":"CollectionFolder","CollectionType":"movies"},
+            {"Id":"lib-mu","Name":"Music","Type":"CollectionFolder","CollectionType":"music"}],"TotalRecordCount":2}"""))
+        val libs = api.musicLibraries() as ApiResult.Ok
+        assertEquals(listOf("lib-mu"), libs.value.map { it.id })
+    }
+
+    @Test fun `a song decodes its artists album and track number`() {
+        val json = """{"Id":"s1","Name":"Let It Happen","Type":"Audio","Artists":["Tame Impala"],"AlbumArtists":["Tame Impala"],
+            "Album":"Currents","AlbumId":"al1","AlbumPrimaryImageTag":"p","IndexNumber":1,"ParentIndexNumber":0,"RunTimeTicks":4500000000}"""
+        val song = JellyfinJson.decodeFromString<JfItem>(json)
+        assertTrue(song.isAudio)
+        assertEquals("Tame Impala", song.musicArtist)
+        assertEquals("Currents", song.album)
+        assertEquals("1", song.trackLabel)
+        assertEquals(450L, song.runtimeSeconds)
+        assertEquals("2-3", JellyfinJson.decodeFromString<JfItem>("""{"Id":"s2","Type":"Audio","IndexNumber":3,"ParentIndexNumber":2}""").trackLabel)
+        assertTrue(JellyfinJson.decodeFromString<JfItem>("""{"Id":"a","Type":"MusicAlbum"}""").isMusicAlbum)
+        assertTrue(JellyfinJson.decodeFromString<JfItem>("""{"Id":"b","Type":"MusicArtist"}""").isMusicArtist)
+    }
+
+    @Test fun `audio stream addresses are built without the token`() {
+        val urls = MediaUrls({ "http://jf.local:8096" }, { "dev" })
+        val direct = urls.audioStream("s1", "ms-s1")!!
+        assertTrue(direct.contains("/Audio/s1/stream") && direct.contains("static=true") && direct.contains("mediaSourceId=ms-s1") && !direct.contains("Token"))
+    }
+
+    @Test fun `a song without its own picture falls back to its album art`() {
+        val urls = MediaUrls({ "http://jf.local" }, { "d" })
+        val song = JfItem("s1", "Track", "Audio", albumId = "al1", albumPrimaryTag = "at")
+        assertTrue(urls.poster(song)!!.contains("/Items/al1/Images/Primary"))
+    }
 }

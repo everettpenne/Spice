@@ -5,7 +5,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -24,9 +26,12 @@ import com.everettpenne.spice.ui.theme.SpiceTheme
 import com.kyant.backdrop.backdrops.layerBackdrop
 
 object Routes {
-    const val HOME = "home"; const val LIBRARY = "library"; const val SEARCH = "search"; const val SETTINGS = "settings"; const val LOGIN = "login"
+    const val HOME = "home"; const val LIBRARY = "library"; const val MUSIC = "music"; const val SEARCH = "search"; const val SETTINGS = "settings"; const val LOGIN = "login"
+    const val NOW_PLAYING = "nowplaying"
     fun item(id: String) = "item/${Uri.encode(id)}"
     fun play(id: String) = "play/${Uri.encode(id)}"
+    fun artist(id: String) = "artist/${Uri.encode(id)}"
+    fun album(id: String) = "album/${Uri.encode(id)}"
     fun browse(parent: String?, title: String, types: String?, filter: String?) =
         "browse?parent=${Uri.encode(parent ?: "")}&title=${Uri.encode(title)}&types=${Uri.encode(types ?: "")}&filter=${Uri.encode(filter ?: "")}"
 }
@@ -55,15 +60,20 @@ fun SpiceRoot() {
                 override fun openItem(id: String) = navController.navigate(Routes.item(id))
                 override fun openBrowse(parentId: String?, title: String, types: String?, filter: String?) = navController.navigate(Routes.browse(parentId, title, types, filter))
                 override fun play(id: String) = navController.navigate(Routes.play(id))
+                override fun openArtist(id: String) = navController.navigate(Routes.artist(id))
+                override fun openAlbum(id: String) = navController.navigate(Routes.album(id))
             }
         }
 
         val tabs = Tab.entries.associateBy { it.route }
         var lastTab by remember { mutableStateOf(Tab.Home) }
         LaunchedEffect(route) { tabs[route]?.let { lastTab = it } }
-        val hideTabs = route == Routes.LOGIN || route?.startsWith("play/") == true
+        val hideTabs = route == Routes.LOGIN || route?.startsWith("play/") == true || route == Routes.NOW_PLAYING
         val tabBar: (@Composable () -> Unit)? = if (!hideTabs && signedIn) ({
-            GlassTabBar(Tab.bar, selected = lastTab, search = Tab.Search, onSelect = { tab -> navController.navigate(tab.route) { popUpTo(Routes.HOME) { inclusive = false }; launchSingleTop = true } })
+            Column(Modifier.fillMaxWidth()) {
+                MiniPlayer(onOpen = { navController.navigate(Routes.NOW_PLAYING) { launchSingleTop = true } })
+                GlassTabBar(Tab.bar, selected = lastTab, search = Tab.Search, onSelect = { tab -> navController.navigate(tab.route) { popUpTo(Routes.HOME) { inclusive = false }; launchSingleTop = true } })
+            }
         }) else null
 
         CompositionLocalProvider(com.everettpenne.updater.LocalUpdater provides updater, LocalTabBar provides tabBar) {
@@ -80,8 +90,16 @@ fun SpiceRoot() {
                         }
                         composable(Routes.HOME) { HomeScreen(nav, onSettings = { navController.navigate(Routes.SETTINGS) }) }
                         composable(Routes.LIBRARY) { LibraryScreen(nav) }
+                        composable(Routes.MUSIC) { MusicScreen(nav) }
                         composable(Routes.SEARCH) { SearchScreen(nav) }
                         composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }, onSignedOut = {}) }
+                        composable(Routes.NOW_PLAYING) { NowPlayingScreen(onBack = { navController.popBackStack() }) }
+                        composable("artist/{id}", listOf(navArgument("id") { type = NavType.StringType })) { e ->
+                            MusicArtistScreen(e.arguments?.getString("id").orEmpty(), nav, onBack = { navController.popBackStack() })
+                        }
+                        composable("album/{id}", listOf(navArgument("id") { type = NavType.StringType })) { e ->
+                            MusicAlbumScreen(e.arguments?.getString("id").orEmpty(), nav, onBack = { navController.popBackStack() })
+                        }
                         composable("browse?parent={parent}&title={title}&types={types}&filter={filter}", listOf(
                             navArgument("parent") { type = NavType.StringType; defaultValue = "" }, navArgument("title") { type = NavType.StringType; defaultValue = "" },
                             navArgument("types") { type = NavType.StringType; defaultValue = "" }, navArgument("filter") { type = NavType.StringType; defaultValue = "" })) { e ->

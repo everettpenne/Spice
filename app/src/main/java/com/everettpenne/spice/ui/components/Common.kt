@@ -35,6 +35,10 @@ interface Navigator {
     fun openItem(id: String)
     fun openBrowse(parentId: String?, title: String, types: String? = null, filter: String? = null)
     fun play(id: String)
+    /** Opens a music artist; a plain-item navigator can leave it to [openItem]. */
+    fun openArtist(id: String) = openItem(id)
+    /** Opens an album; a plain-item navigator can leave it to [openItem]. */
+    fun openAlbum(id: String) = openItem(id)
 }
 
 /** What a screen's data is doing. A reload keeps the old value on screen until the new one arrives. */

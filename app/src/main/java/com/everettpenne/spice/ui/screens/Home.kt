@@ -63,5 +63,5 @@ fun HomeScreen(nav: Navigator, onSettings: () -> Unit) {
     }
 }
 
-/** What to list in a library: its movies or its series, not every file and folder. */
-fun typesFor(collectionType: String?): String? = when (collectionType) { "movies" -> "Movie"; "tvshows" -> "Series"; "boxsets" -> "BoxSet"; else -> null }
+/** What to list in a library: its movies, series or albums, not every file and folder. */
+fun typesFor(collectionType: String?): String? = when (collectionType) { "movies" -> "Movie"; "tvshows" -> "Series"; "boxsets" -> "BoxSet"; "music" -> "MusicAlbum"; else -> null }

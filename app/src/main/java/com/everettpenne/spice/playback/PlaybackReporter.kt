@@ -58,12 +58,13 @@ class PlaybackReporter(private val api: JellyfinApi, private val player: Player)
         if (startedFor != null) send(Kind.PROGRESS, player.currentMediaItem, lastPositionMs, paused = !isPlaying)
     }
 
-    /** An item being replaced or cleared: report the old one stopped where it was. */
+    /** An item being replaced or cleared: report the old one stopped where it was. A song that finished and advanced in the queue counts as played. */
     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
         val old = oldPosition.mediaItem ?: return
         if (startedFor == old.mediaId && (reason == Player.DISCONTINUITY_REASON_REMOVE || reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION)) {
             startedFor = null
             send(Kind.STOPPED, old, oldPosition.positionMs, paused = true)
+            if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) PlaybackMeta.itemId(old)?.let { id -> scope.launch { api.setPlayed(id, true) } }
         }
     }
 

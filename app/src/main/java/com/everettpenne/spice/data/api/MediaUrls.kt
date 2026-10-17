@@ -15,10 +15,11 @@ class MediaUrls(private val server: () -> String?, private val deviceId: () -> S
         return b.build().toString()
     }
 
-    /** The poster: the item's own, or (for an episode with none) its series'. */
+    /** The poster: the item's own, or (for an episode with none) its series', or (for a song with none) its album's. */
     fun poster(item: JfItem, width: Int = 400): String? = when {
         item.imageTags.primary != null -> image(item.id, "Primary", item.imageTags.primary, width)
         item.seriesId != null && item.seriesPrimaryTag != null -> image(item.seriesId, "Primary", item.seriesPrimaryTag, width)
+        item.albumId != null && item.albumPrimaryTag != null -> image(item.albumId, "Primary", item.albumPrimaryTag, width)
         else -> null
     }
 
@@ -42,6 +43,12 @@ class MediaUrls(private val server: () -> String?, private val deviceId: () -> S
     /** The original file, served as it is: ExoPlayer plays it directly when it understands the container and codecs. */
     fun directStream(itemId: String, mediaSourceId: String): String? = builder("Videos/$itemId/stream")
         ?.addQueryParameter("static", "true")?.addQueryParameter("mediaSourceId", mediaSourceId)?.addQueryParameter("deviceId", deviceId())?.build()?.toString()
+
+    /** The original audio file, served as it is. */
+    fun audioStream(itemId: String, mediaSourceId: String?): String? = builder("Audio/$itemId/stream")?.apply {
+        addQueryParameter("static", "true"); addQueryParameter("deviceId", deviceId())
+        if (!mediaSourceId.isNullOrEmpty()) addQueryParameter("mediaSourceId", mediaSourceId)
+    }?.build()?.toString()
 
     /** A transcoded HLS stream (H.264 + AAC, stereo), the fallback when the phone cannot play the original. */
     fun hlsStream(itemId: String, mediaSourceId: String, playSessionId: String, maxBitrate: Int = 8_000_000, startTicks: Long = 0): String? =
