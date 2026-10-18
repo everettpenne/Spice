@@ -58,6 +58,7 @@ import com.everettpenne.spice.data.api.ApiResult
 import com.everettpenne.spice.data.model.JfItem
 import com.everettpenne.spice.data.model.TICKS_PER_SECOND
 import com.everettpenne.spice.graph
+import com.everettpenne.spice.playback.PiP
 import com.everettpenne.spice.playback.PlaybackMeta
 import com.everettpenne.spice.playback.PlaybackService
 import com.everettpenne.spice.ui.components.*
@@ -129,6 +130,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
     var scrubbing by remember { mutableStateOf<Float?>(null) }
     var buffering by remember { mutableStateOf(true) }
     var notice by remember(item.id) { mutableStateOf<String?>(null) }
+    val pipActive by PiP.active.collectAsState()
 
     // The first time, ask to show the playback notification (Android 13 and newer); sound in the background works either way.
     val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -177,7 +179,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
         val url = (if (transcoding) graph.urls.hlsStream(item.id, src.id, playSessionId) else graph.urls.directStream(item.id, src.id)) ?: return@LaunchedEffect
         val resumeAt = if (PlaybackMeta.itemId(current) == item.id) c.currentPosition else startMs
         val metadata = MediaMetadata.Builder().setTitle(if (item.isEpisode) item.name else item.name)
-            .setArtist(item.seriesName).setSubtitle(item.episodeLabel).setExtras(PlaybackMeta.extras(item.id, src.id, method, playSessionId))
+            .setArtist(item.seriesName).setSubtitle(item.episodeLabel).setExtras(PlaybackMeta.extras(item.id, src.id, method, playSessionId, item.type))
             .apply { graph.urls.poster(item, 400)?.let { setArtworkUri(Uri.parse(it)) } }.build()
         c.setMediaItem(MediaItem.Builder().setMediaId(item.id).setUri(url).setMediaMetadata(metadata)
             .setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(Uri.parse(url)).build()).build(), resumeAt)
@@ -237,7 +239,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
             }
             notice?.let { Text(it, color = Color.White, style = MaterialTheme.typography.bodySmall, maxLines = 1, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = if (compact) 52.dp else 72.dp)
                 .background(Color.Black.copy(alpha = .6f), CircleShape).padding(horizontal = 14.dp, vertical = 8.dp)) }
-            if (controlsVisible && !failed) PlayerControls(
+            if (controlsVisible && !failed && !pipActive) PlayerControls(
                 compact = compact, landscape = landscape, title = item.seriesName ?: item.name,
                 subtitle = if (item.isEpisode) listOfNotNull(item.episodeLabel, item.name).joinToString(" · ") else null,
                 transcoding = transcoding, playing = playing, position = scrubbing?.let { (it * duration).toLong() } ?: position, duration = duration, scrub = scrubbing,
@@ -249,12 +251,17 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
         }
     }
 
-    Box(Modifier.fillMaxSize().background(if (landscape) Color.Black else MaterialTheme.colorScheme.background)) {
-        if (landscape) video(false) else Column(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().background(if (landscape || pipActive) Color.Black else MaterialTheme.colorScheme.background)) {
+        // In the PiP window only the video shows: no controls overlay and no details below it.
+        if (pipActive) {
+            video(true)
+        } else if (landscape) {
+            video(false)
+        } else Column(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxWidth().background(Color.Black).statusBarsPadding()) { Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f)) { video(true) } }
             PlayerInfo(item, nav, onSwitch, ::stopPlayback)
         }
-        if (showTracks && controller != null) TrackSheet(controller) { showTracks = false }
+        if (showTracks && controller != null && !pipActive) TrackSheet(controller) { showTracks = false }
     }
 }
 

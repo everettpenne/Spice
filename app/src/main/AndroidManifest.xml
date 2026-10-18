@@ -22,12 +22,18 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
+            android:supportsPictureInPicture="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Receives the PiP window's play/pause tap (an explicit broadcast from MainActivity), so it can toggle the service without leaving PiP. -->
+        <receiver
+            android:name=".playback.PipActionReceiver"
+            android:exported="false" />
 
         <service
             android:name=".playback.PlaybackService"
