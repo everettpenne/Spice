@@ -63,6 +63,7 @@ class PlaybackService : MediaSessionService() {
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) { PlaybackStatus.update(mediaItem, player.isPlaying) }
             override fun onIsPlayingChanged(isPlaying: Boolean) { PlaybackStatus.update(player.currentMediaItem, isPlaying) }
+            override fun onVideoSizeChanged(videoSize: androidx.media3.common.VideoSize) { PiP.videoRatio = com.everettpenne.media.videoAspectRatio(player) }
         })
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)

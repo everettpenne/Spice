@@ -17,8 +17,8 @@ android {
         applicationId = "com.everettpenne.spice"
         minSdk = 31
         targetSdk = 36
-        versionCode = 14
-        versionName = "0.5.4"
+        versionCode = 15
+        versionName = "0.5.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -58,6 +58,7 @@ dependencies {
     implementation("com.everettpenne:glass")
     // In-app updates from GitHub releases: also ../Glass.
     implementation("com.everettpenne:updater")
+    implementation("com.everettpenne:media")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

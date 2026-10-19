@@ -18,6 +18,9 @@ object PiP {
     /** Whether leaving the app should enter picture-in-picture: a video that is actually playing. */
     fun shouldEnterPip(type: String?, isPlaying: Boolean): Boolean = isPlaying && isVideoType(type)
 
+    /** Width over height of the video that is playing, or 16:9 before its first frame; the PiP window takes this shape. */
+    @Volatile var videoRatio: Float = 16f / 9f
+
     private val _active = MutableStateFlow(false)
     /** True while the activity is in the picture-in-picture window: the player hides its normal UI and shows just the video. */
     val active: StateFlow<Boolean> = _active.asStateFlow()

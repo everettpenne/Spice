@@ -43,10 +43,11 @@ class MainActivity : ComponentActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         val now = PlaybackStatus.now.value
-        if (PiP.shouldEnterPip(now.itemType, now.isPlaying)) {
-            enterPictureInPictureMode(pipParams(now.isPlaying))
-        }
+        if (PiP.shouldEnterPip(now.itemType, now.isPlaying)) enterPip()
     }
+
+    /** Floats the playing video in its own shape, with a play/pause button; false (not a crash) when the device or state does not allow it. */
+    fun enterPip(): Boolean = com.everettpenne.media.enterPip(this, pipParams(PlaybackStatus.now.value.isPlaying))
 
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
@@ -60,7 +61,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun pipParams(playing: Boolean): PictureInPictureParams = PictureInPictureParams.Builder()
-        .setAspectRatio(Rational(16, 9))
+        .setAspectRatio(com.everettpenne.media.pipRational(PiP.videoRatio))
         .setActions(listOf(pipPlayPauseAction(playing)))
         .build()
 

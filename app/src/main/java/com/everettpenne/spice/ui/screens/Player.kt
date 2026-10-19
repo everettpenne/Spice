@@ -244,7 +244,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
                 subtitle = if (item.isEpisode) listOfNotNull(item.episodeLabel, item.name).joinToString(" · ") else null,
                 transcoding = transcoding, playing = playing, position = scrubbing?.let { (it * duration).toLong() } ?: position, duration = duration, scrub = scrubbing,
                 onBack = ::leave, onTracks = { showTracks = true }, onFullscreen = ::toggleFullscreen,
-                onPip = { activity?.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().setAspectRatio(android.util.Rational(16, 9)).build()) },
+                onPip = { (activity as? com.everettpenne.spice.MainActivity)?.enterPip() },
                 onPlayPause = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
                 onSeekBack = { controller?.seekBack() }, onSeekForward = { controller?.seekForward() },
                 onScrub = { scrubbing = it; controlsVisible = true },
