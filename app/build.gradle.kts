@@ -17,8 +17,8 @@ android {
         applicationId = "com.everettpenne.spice"
         minSdk = 31
         targetSdk = 36
-        versionCode = 13
-        versionName = "0.5.3"
+        versionCode = 14
+        versionName = "0.5.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {

@@ -244,6 +244,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
                 subtitle = if (item.isEpisode) listOfNotNull(item.episodeLabel, item.name).joinToString(" · ") else null,
                 transcoding = transcoding, playing = playing, position = scrubbing?.let { (it * duration).toLong() } ?: position, duration = duration, scrub = scrubbing,
                 onBack = ::leave, onTracks = { showTracks = true }, onFullscreen = ::toggleFullscreen,
+                onPip = { activity?.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().setAspectRatio(android.util.Rational(16, 9)).build()) },
                 onPlayPause = { controller?.let { if (it.isPlaying) it.pause() else it.play() } },
                 onSeekBack = { controller?.seekBack() }, onSeekForward = { controller?.seekForward() },
                 onScrub = { scrubbing = it; controlsVisible = true },
@@ -268,7 +269,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
 @Composable
 private fun PlayerControls(
     compact: Boolean, landscape: Boolean, title: String, subtitle: String?, transcoding: Boolean, playing: Boolean, position: Long, duration: Long, scrub: Float?,
-    onBack: () -> Unit, onTracks: () -> Unit, onFullscreen: () -> Unit, onPlayPause: () -> Unit, onSeekBack: () -> Unit, onSeekForward: () -> Unit,
+    onBack: () -> Unit, onTracks: () -> Unit, onFullscreen: () -> Unit, onPip: () -> Unit, onPlayPause: () -> Unit, onSeekBack: () -> Unit, onSeekForward: () -> Unit,
     onScrub: (Float) -> Unit, onScrubDone: () -> Unit,
 ) {
     Box(Modifier.fillMaxSize()) {
@@ -283,6 +284,7 @@ private fun PlayerControls(
             Text(if (transcoding) "Transcoding" else "Direct", color = Color.White.copy(alpha = .8f), style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.background(Color.White.copy(alpha = .14f), CircleShape).padding(horizontal = 12.dp, vertical = 6.dp))
             PlayerButton(Icons.Rounded.Subtitles, "Audio and subtitles", onTracks)
+            PlayerButton(Icons.Rounded.PictureInPictureAlt, "Picture in picture", onPip)
         }
         Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(if (compact) 24.dp else 36.dp), verticalAlignment = Alignment.CenterVertically) {
             PlayerButton(Icons.Rounded.Replay10, "Back 10 seconds", onSeekBack, size = if (compact) 44 else 56)
