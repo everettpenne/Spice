@@ -163,7 +163,7 @@ private fun QueueRow(title: String, artist: String, artwork: String?, durationMs
                 color = if (playing) Spice.accent else MaterialTheme.colorScheme.onSurface)
             if (artist.isNotBlank()) Text(artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (durationMs != null) Text(formatClockMs(durationMs), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (durationMs != null) Text(com.everettpenne.media.playerClock(durationMs), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -204,40 +204,28 @@ private fun NowPlayingContent(controller: MediaController, now: NowPlaying) {
         Text(meta.artist?.toString().orEmpty(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
         meta.albumTitle?.let { Text(it.toString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         Spacer(Modifier.height(20.dp))
-        GlassSlider(
-            value = scrubbing ?: if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f,
-            onValueChange = { scrubbing = it },
-            onValueChangeFinished = {
-                scrubbing?.let { f -> controller.seekTo((f * duration).toLong()); position = (f * duration).toLong() }; scrubbing = null
-            },
-            modifier = Modifier.fillMaxWidth(), description = "Seek")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(formatClockMs(position), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("-" + formatClockMs((duration - position).coerceAtLeast(0)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        // The suite's shared player controls (Glass media): the same scrubber and transport as Thumper and Seekur, with shuffle, previous,
+        // next and repeat either side.
+        com.everettpenne.media.PlayerScrubber(position, duration, onSeek = { controller.seekTo(it); position = it }, onScrubbing = { scrubbing = if (it) 0f else null })
         Spacer(Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(26.dp), verticalAlignment = Alignment.CenterVertically) {
-            GlassIconButton(Icons.Rounded.Shuffle, if (shuffle) "Shuffle on" else "Shuffle off",
-                { controller.shuffleModeEnabled = !controller.shuffleModeEnabled }, tint = if (shuffle) Spice.accent else null, size = 46)
-            GlassIconButton(Icons.Rounded.SkipPrevious, "Previous", { controller.seekToPreviousMediaItem() }, size = 52)
-            GlassIconButton(if (now.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (now.isPlaying) "Pause" else "Play",
-                { if (now.isPlaying) controller.pause() else controller.play() }, size = 68)
-            GlassIconButton(Icons.Rounded.SkipNext, "Next", { controller.seekToNextMediaItem() }, size = 52)
-            GlassIconButton(if (repeat == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
-                when (repeat) { Player.REPEAT_MODE_ONE -> "Repeat one"; Player.REPEAT_MODE_ALL -> "Repeat all"; else -> "Repeat off" },
-                {
-                    controller.repeatMode = when (repeat) {
-                        Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-                        Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-                        else -> Player.REPEAT_MODE_OFF
-                    }
-                }, tint = if (repeat != Player.REPEAT_MODE_OFF) Spice.accent else null, size = 46)
-        }
+        com.everettpenne.media.PlayerTransport(now.isPlaying, { if (now.isPlaying) controller.pause() else controller.play() }, accent = Spice.accent, size = 68.dp,
+            start = {
+                GlassIconButton(Icons.Rounded.Shuffle, if (shuffle) "Shuffle on" else "Shuffle off",
+                    { controller.shuffleModeEnabled = !controller.shuffleModeEnabled }, tint = if (shuffle) Spice.accent else null, size = 46)
+                GlassIconButton(Icons.Rounded.SkipPrevious, "Previous", { controller.seekToPreviousMediaItem() }, size = 52)
+            },
+            end = {
+                GlassIconButton(Icons.Rounded.SkipNext, "Next", { controller.seekToNextMediaItem() }, size = 52)
+                GlassIconButton(if (repeat == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                    when (repeat) { Player.REPEAT_MODE_ONE -> "Repeat one"; Player.REPEAT_MODE_ALL -> "Repeat all"; else -> "Repeat off" },
+                    {
+                        controller.repeatMode = when (repeat) {
+                            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                            else -> Player.REPEAT_MODE_OFF
+                        }
+                    }, tint = if (repeat != Player.REPEAT_MODE_OFF) Spice.accent else null, size = 46)
+            })
         Spacer(Modifier.weight(1f))
     }
-}
-
-private fun formatClockMs(ms: Long): String {
-    val s = (ms / 1000).coerceAtLeast(0)
-    return if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
 }

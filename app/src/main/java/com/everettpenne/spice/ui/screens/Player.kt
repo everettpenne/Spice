@@ -1,3 +1,6 @@
+// Media3 marks parts of its API "unstable" (they may change between versions); these are used on purpose and pinned by the version in the build.
+@file:androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+
 package com.everettpenne.spice.ui.screens
 
 import com.everettpenne.glass.GlassSlider
@@ -97,10 +100,8 @@ fun PlayerScreen(id: String, nav: Navigator, onBack: () -> Unit, onSwitch: (Stri
     }
 }
 
-private fun formatClock(ms: Long): String {
-    val s = (ms / 1000).coerceAtLeast(0)
-    return if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
-}
+/** The suite's shared player clock (Glass media), so every player reads time the same way. */
+private fun formatClock(ms: Long): String = com.everettpenne.media.playerClock(ms)
 
 /** True when the file has audio but this phone can decode none of it (DTS and TrueHD are the usual ones): the video would play in silence. */
 private fun Tracks.audioUnplayable(): Boolean = groups.filter { it.type == C.TRACK_TYPE_AUDIO }.let { audio -> audio.isNotEmpty() && audio.none { it.isSupported(false) } }
@@ -294,7 +295,7 @@ private fun PlayerControls(
         Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().then(safe).padding(horizontal = if (compact) 12.dp else 24.dp, vertical = if (compact) 0.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(formatClock(position), color = Color.White, style = MaterialTheme.typography.bodySmall)
-            GlassSlider(value = scrub ?: if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f, onValueChange = onScrub, onValueChangeFinished = onScrubDone,
+            GlassSlider(value = com.everettpenne.media.scrubberFraction(position, duration, scrub), onValueChange = onScrub, onValueChangeFinished = onScrubDone,
                 modifier = Modifier.weight(1f), trackColor = Color.White.copy(alpha = .3f), description = "Seek")
             Text("-" + formatClock((duration - position).coerceAtLeast(0)), color = Color.White, style = MaterialTheme.typography.bodySmall)
             Icon(if (landscape) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen, if (landscape) "Exit full screen" else "Full screen", tint = Color.White,
