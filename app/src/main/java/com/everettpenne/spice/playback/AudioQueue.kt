@@ -15,24 +15,25 @@ import java.util.UUID
  */
 object AudioQueue {
     /** Replaces whatever the service is playing with [tracks], starting at [startIndex]. [shuffle] plays them in a random order instead. */
-    fun play(controller: MediaController, tracks: List<JfItem>, urls: MediaUrls, startIndex: Int = 0, shuffle: Boolean = false) {
+    fun play(controller: MediaController, tracks: List<JfItem>, urls: MediaUrls, startIndex: Int = 0, shuffle: Boolean = false, local: (String) -> java.io.File? = { null }) {
         val ordered = if (shuffle) tracks.shuffled() else tracks
         val sessionId = UUID.randomUUID().toString().replace("-", "")
-        val items = ordered.mapNotNull { build(it, urls, sessionId) }
+        val items = ordered.mapNotNull { build(it, urls, sessionId, local(it.id)) }
         if (items.isEmpty()) return
         controller.setMediaItems(items, startIndex.coerceIn(0, items.lastIndex), 0L)
         controller.prepare()
         controller.playWhenReady = true
     }
 
-    private fun build(track: JfItem, urls: MediaUrls, sessionId: String): MediaItem? {
+    /** A song's queue entry: its downloaded file when there is one (it plays with no connection), else the server's stream. */
+    private fun build(track: JfItem, urls: MediaUrls, sessionId: String, file: java.io.File?): MediaItem? {
         val sourceId = track.mediaSources.firstOrNull()?.id
-        val url = urls.audioStream(track.id, sourceId) ?: return null
+        val url = file?.let { Uri.fromFile(it).toString() } ?: urls.audioStream(track.id, sourceId) ?: return null
         val metadata = MediaMetadata.Builder()
             .setTitle(track.name)
             .setArtist(track.musicArtist)
             .setAlbumTitle(track.album)
-            .setExtras(PlaybackMeta.extras(track.id, sourceId ?: "", "DirectStream", sessionId, itemType = "Audio"))
+            .setExtras(PlaybackMeta.extras(track.id, sourceId ?: "", if (file != null) "DirectPlay" else "DirectStream", sessionId, itemType = "Audio"))
             .apply {
                 track.runtimeSeconds?.let { setDurationMs(it * 1000) }
                 urls.poster(track, 600)?.let { setArtworkUri(Uri.parse(it)) }

@@ -90,7 +90,8 @@ fun rememberMediaController(): MediaController? {
 @Composable
 fun PlayerScreen(id: String, nav: Navigator, onBack: () -> Unit, onSwitch: (String) -> Unit) {
     val graph = LocalContext.current.graph
-    val load = rememberLoad(id) { graph.api.item(id) }
+    // With no server (offline, or away from home), a downloaded item still plays from its saved copy.
+    val load = rememberLoad(id) { graph.api.item(id).let { r -> if (r is ApiResult.Failed) graph.downloads.savedItem(id)?.let { ApiResult.Ok(it.item) } ?: r else r } }
     when (val s = load.state) {
         Load.Loading -> Box(Modifier.fillMaxSize().background(Color.Black)) { CircularProgressIndicator(Modifier.align(Alignment.Center), color = Color.White) }
         is Load.Error -> Column(Modifier.fillMaxSize().background(Color.Black), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
@@ -174,14 +175,17 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
     LaunchedEffect(controller, item.id, transcoding) {
         val c = controller ?: return@LaunchedEffect
         val src = source ?: return@LaunchedEffect
-        val method = if (transcoding) "Transcode" else "DirectStream"
+        // a downloaded file always plays from the phone: no network, no transcode, the original quality
+        val local = graph.downloads.fileFor(item.id)
+        val method = if (local != null) "DirectPlay" else if (transcoding) "Transcode" else "DirectStream"
         val current = c.currentMediaItem
         if (PlaybackMeta.itemId(current) == item.id && PlaybackMeta.method(current) == method) return@LaunchedEffect   // already playing this: rejoin it
-        val url = (if (transcoding) graph.urls.hlsStream(item.id, src.id, playSessionId) else graph.urls.directStream(item.id, src.id)) ?: return@LaunchedEffect
+        val url = local?.let { Uri.fromFile(it).toString() }
+            ?: (if (transcoding) graph.urls.hlsStream(item.id, src.id, playSessionId) else graph.urls.directStream(item.id, src.id)) ?: return@LaunchedEffect
         val resumeAt = if (PlaybackMeta.itemId(current) == item.id) c.currentPosition else startMs
         val metadata = MediaMetadata.Builder().setTitle(if (item.isEpisode) item.name else item.name)
             .setArtist(item.seriesName).setSubtitle(item.episodeLabel).setExtras(PlaybackMeta.extras(item.id, src.id, method, playSessionId, item.type))
-            .apply { graph.urls.poster(item, 400)?.let { setArtworkUri(Uri.parse(it)) } }.build()
+            .apply { (graph.downloads.posterFor(item.id)?.let { Uri.fromFile(it) } ?: graph.urls.poster(item, 400)?.let { Uri.parse(it) })?.let { setArtworkUri(it) } }.build()
         c.setMediaItem(MediaItem.Builder().setMediaId(item.id).setUri(url).setMediaMetadata(metadata)
             .setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(Uri.parse(url)).build()).build(), resumeAt)
         c.volume = 1f
@@ -240,7 +244,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
             }
             notice?.let { Text(it, color = Color.White, style = MaterialTheme.typography.bodySmall, maxLines = 1, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = if (compact) 52.dp else 72.dp)
                 .background(Color.Black.copy(alpha = .6f), CircleShape).padding(horizontal = 14.dp, vertical = 8.dp)) }
-            if (controlsVisible && !failed && !pipActive) PlayerControls(
+            if (controlsVisible && !failed && !pipActive) PlayerControls(onPhone = graph.downloads.fileFor(item.id) != null,
                 compact = compact, landscape = landscape, title = item.seriesName ?: item.name,
                 subtitle = if (item.isEpisode) listOfNotNull(item.episodeLabel, item.name).joinToString(" · ") else null,
                 transcoding = transcoding, playing = playing, position = scrubbing?.let { (it * duration).toLong() } ?: position, duration = duration, scrub = scrubbing,
@@ -269,6 +273,7 @@ private fun PlayerContent(item: JfItem, nav: Navigator, onBack: () -> Unit, onSw
 
 @Composable
 private fun PlayerControls(
+    onPhone: Boolean,
     compact: Boolean, landscape: Boolean, title: String, subtitle: String?, transcoding: Boolean, playing: Boolean, position: Long, duration: Long, scrub: Float?,
     onBack: () -> Unit, onTracks: () -> Unit, onFullscreen: () -> Unit, onPip: () -> Unit, onPlayPause: () -> Unit, onSeekBack: () -> Unit, onSeekForward: () -> Unit,
     onScrub: (Float) -> Unit, onScrubDone: () -> Unit,
@@ -282,7 +287,7 @@ private fun PlayerControls(
                 Text(title, color = Color.White, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (subtitle != null && !compact) Text(subtitle, color = Color.White.copy(alpha = .75f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
             }
-            Text(if (transcoding) "Transcoding" else "Direct", color = Color.White.copy(alpha = .8f), style = MaterialTheme.typography.bodySmall,
+            Text(if (onPhone) "Downloaded" else if (transcoding) "Transcoding" else "Direct", color = Color.White.copy(alpha = .8f), style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.background(Color.White.copy(alpha = .14f), CircleShape).padding(horizontal = 12.dp, vertical = 6.dp))
             PlayerButton(Icons.Rounded.Subtitles, "Audio and subtitles", onTracks)
             PlayerButton(Icons.Rounded.PictureInPictureAlt, "Picture in picture", onPip)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,7 +23,7 @@ import kotlinx.coroutines.coroutineScope
 class HomeData(val resume: List<JfItem>, val nextUp: List<JfItem>, val latest: List<Pair<JfItem, List<JfItem>>>)
 
 @Composable
-fun HomeScreen(nav: Navigator, onSettings: () -> Unit) {
+fun HomeScreen(nav: Navigator, onSettings: () -> Unit, onDownloads: () -> Unit = {}) {
     val graph = LocalContext.current.graph
     val session by graph.sessions.session.collectAsState()
     val load = rememberLoad(session?.userId) {
@@ -41,13 +42,19 @@ fun HomeScreen(nav: Navigator, onSettings: () -> Unit) {
     }
     GlassScreen(bars = {
         GlassTopBar("Home", Modifier.align(Alignment.TopCenter)) {
+            GlassIconButton(androidx.compose.material.icons.Icons.Rounded.DownloadForOffline, "Downloads", onDownloads, size = 48)
             GlassIconButton(Icons.Rounded.Settings, "Settings", onSettings, size = 48)
         }
     }) { contentPadding ->
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = contentPadding.calculateTopPadding() + 8.dp, bottom = contentPadding.calculateBottomPadding()), verticalArrangement = Arrangement.spacedBy(26.dp)) {
             when (val s = load.state) {
                 Load.Loading -> item { LoadingRow() }
-                is Load.Error -> item { ErrorState(s.failure, load.reload) }
+                is Load.Error -> item {
+                    ErrorState(s.failure, load.reload)
+                    if (graph.downloads.saved.collectAsState().value.isNotEmpty()) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        GlassButton("Watch Downloads", onDownloads)
+                    }
+                }
                 is Load.Done -> {
                     val d = s.value
                     item { ShelfRow("Continue Watching", d.resume, nav, wide = true) }

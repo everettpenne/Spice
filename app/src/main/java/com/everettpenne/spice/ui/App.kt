@@ -27,7 +27,7 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 
 object Routes {
     const val HOME = "home"; const val LIBRARY = "library"; const val MUSIC = "music"; const val SEARCH = "search"; const val SETTINGS = "settings"; const val LOGIN = "login"
-    const val NOW_PLAYING = "nowplaying"
+    const val NOW_PLAYING = "nowplaying"; const val DOWNLOADS = "downloads"
     fun item(id: String) = "item/${Uri.encode(id)}"
     fun play(id: String) = "play/${Uri.encode(id)}"
     fun artist(id: String) = "artist/${Uri.encode(id)}"
@@ -88,11 +88,12 @@ fun SpiceRoot() {
                         composable(Routes.LOGIN) {
                             LoginScreen(onDone = { navController.navigate(Routes.HOME) { popUpTo(navController.graph.id) { inclusive = true } } })
                         }
-                        composable(Routes.HOME) { HomeScreen(nav, onSettings = { navController.navigate(Routes.SETTINGS) }) }
+                        composable(Routes.HOME) { HomeScreen(nav, onSettings = { navController.navigate(Routes.SETTINGS) }, onDownloads = { navController.navigate(Routes.DOWNLOADS) }) }
                         composable(Routes.LIBRARY) { LibraryScreen(nav) }
                         composable(Routes.MUSIC) { MusicScreen(nav) }
                         composable(Routes.SEARCH) { SearchScreen(nav) }
-                        composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }, onSignedOut = {}) }
+                        composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }, onSignedOut = {}, onDownloads = { navController.navigate(Routes.DOWNLOADS) }) }
+                        composable(Routes.DOWNLOADS) { DownloadsScreen(nav, onBack = { navController.popBackStack() }) }
                         composable(Routes.NOW_PLAYING) { NowPlayingScreen(onBack = { navController.popBackStack() }) }
                         composable("artist/{id}", listOf(navArgument("id") { type = NavType.StringType })) { e ->
                             MusicArtistScreen(e.arguments?.getString("id").orEmpty(), nav, onBack = { navController.popBackStack() })

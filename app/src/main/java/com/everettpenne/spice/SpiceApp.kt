@@ -38,6 +38,13 @@ class Graph(app: Context) {
 
     val api: JellyfinApi = JellyfinApi(http, session = { sessions.session.value }, deviceId = { sessions.deviceId })
     val urls = MediaUrls(server = { sessions.session.value?.serverUrl }, deviceId = { sessions.deviceId })
+
+    private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main)
+    val downloads = com.everettpenne.spice.data.Downloads(app, java.io.File(app.getExternalFilesDir(null) ?: app.filesDir, "downloads").apply { mkdirs() }, http,
+        auth = { sessions.session.value?.token?.let { api.authHeader(it) } }, posterUrl = { urls.poster(it, 400) }, wifiOnly = { settings.wifiOnlyDownloads.value }, scope = scope)
+
+    /** Saves an item for watching or listening with no connection. False when there is no session to ask the server with. */
+    fun download(item: com.everettpenne.spice.data.model.JfItem): Boolean = urls.download(item.id)?.let { downloads.download(item, it) } ?: false
 }
 
 class SpiceApp : Application(), SingletonImageLoader.Factory {

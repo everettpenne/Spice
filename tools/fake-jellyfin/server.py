@@ -162,6 +162,8 @@ class H(BaseHTTPRequestHandler):
             pool.sort(key=key, reverse=q.get("SortOrder") == "Descending")
             s, l = int(q.get("StartIndex", 0)), int(q.get("Limit", 60))
             return self.send(200, {"Items": pool[s:s + l], "TotalRecordCount": len(pool)})
+        m = re.match(r"/Items/([^/]+)/Download", p)                                    # the original file, for saving to the phone
+        if m and m[1] in ITEMS: return self.video(AUDIO, "audio/wav") if ITEMS[m[1]]["Type"] == "Audio" else self.video(VIDEO)
         if re.match(r"/Audio/[^/]+/(stream|universal)", p): return self.video(AUDIO, "audio/wav")
         m = re.match(r"/Videos/[^/]+/(stream|master\.m3u8)", p)
         if m and m[1] == "stream": return self.video(DTS if "/m6/" in p else VIDEO)

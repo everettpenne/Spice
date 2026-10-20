@@ -27,7 +27,7 @@ import com.everettpenne.spice.ui.theme.Spice
 import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit, onDownloads: () -> Unit = {}) {
     val context = LocalContext.current
     val graph = context.graph
     val scope = rememberCoroutineScope()
@@ -35,6 +35,9 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit) {
     val direct by graph.settings.directPlay.collectAsState()
     val force by graph.settings.forceTranscode.collectAsState()
     val autoNext by graph.settings.autoplayNext.collectAsState()
+    val wifiOnly by graph.settings.wifiOnlyDownloads.collectAsState()
+    val savedCount = graph.downloads.saved.collectAsState().value.size
+    val downloadState by graph.downloads.state.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
     var cacheBytes by remember { mutableStateOf(SingletonImageLoader.get(context).diskCache?.size ?: 0L) }
 
@@ -50,6 +53,10 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit) {
                 SwitchRow(Icons.Rounded.PlayArrow, "Try Direct Play First", direct && !force) { graph.settings.setDirectPlay(it); if (it) graph.settings.setForceTranscode(false) }
                 SwitchRow(Icons.Rounded.Speed, "Always Transcode", force) { graph.settings.setForceTranscode(it); if (it) graph.settings.setDirectPlay(false) }
                 SwitchRow(Icons.Rounded.SkipNext, "Play Next Episode Automatically", autoNext, graph.settings::setAutoplayNext)
+            }
+            Group("Downloads", footer = "Downloads are the original files from your server, kept in Spice's own storage. Your account must be allowed to download on the server.") {
+                NavRow(Icons.Rounded.DownloadForOffline, "Downloads", if (savedCount == 0) "None" else "$savedCount  ·  ${formatBytes(graph.downloads.totalBytes(downloadState))}", onDownloads)
+                SwitchRow(Icons.Rounded.Wifi, "Download Only on Wi-Fi", wifiOnly, graph.settings::setWifiOnlyDownloads)
             }
             Group("Storage") {
                 NavRow(Icons.Rounded.DeleteSweep, "Clear Image Cache", "%.1f MB".format(cacheBytes / 1_048_576.0)) {

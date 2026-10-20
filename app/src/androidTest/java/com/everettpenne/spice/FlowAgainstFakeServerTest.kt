@@ -43,4 +43,36 @@ class FlowAgainstFakeServerTest {
         clickButton("Play")
         waitFor("Direct", 60_000); Thread.sleep(6000); shot("7-player")
     }
+
+    /** Download a film, find it in Downloads, and play it from the phone: the player says Direct Play (the local file), not Direct Stream. */
+    @Test fun downloadAFilmAndPlayItFromThePhone() {
+        val graph = InstrumentationRegistry.getInstrumentation().targetContext.graph
+        graph.downloads.removeAll()
+        // the emulator's network is not a validated Wi-Fi, so the default (wait for Wi-Fi) would hold the download forever
+        graph.settings.setWifiOnlyDownloads(false)
+        graph.sessions.signOut()
+        waitFor("Your Jellyfin server")
+        rule.onNode(hasSetTextAction()).performTextInput("10.0.2.2:8096")
+        clickButton("Connect")
+        waitFor("Fake Jellyfin")
+        rule.onAllNodes(hasSetTextAction())[0].performTextInput("demo")
+        rule.onAllNodes(hasSetTextAction())[1].performTextInput("demo")
+        clickButton("Sign in")
+        waitFor("Continue Watching")
+        rule.onNodeWithContentDescription("Library").performClick()
+        waitFor("Favorites")
+        rule.onNodeWithText("Movies").performClick()
+        waitFor("Dune")
+        rule.onNodeWithText("Dune").performClick()
+        waitFor("Play")
+        rule.onNodeWithContentDescription("Download").performClick()
+        rule.waitUntil(60_000) { rule.onAllNodesWithContentDescription("Downloaded. Delete the download").fetchSemanticsNodes().isNotEmpty() }
+        shot("d1-downloaded")
+        rule.onNodeWithContentDescription("Home").performClick()
+        rule.onNodeWithContentDescription("Downloads").performClick()
+        waitFor("Dune (2021)"); shot("d2-downloads")
+        rule.onNodeWithText("Dune (2021)").performClick()
+        waitFor("Downloaded", 60_000); Thread.sleep(4000); shot("d3-playing-local")
+        graph.downloads.removeAll()
+    }
 }

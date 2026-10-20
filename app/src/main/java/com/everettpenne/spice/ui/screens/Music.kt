@@ -181,7 +181,7 @@ private fun AlbumBody(album: JfItem) {
     val tracks = (tracksLoad.state as? Load.Done)?.value.orEmpty()
 
     fun play(start: Int = 0, shuffle: Boolean = false) {
-        controller?.let { AudioQueue.play(it, tracks, graph.urls, startIndex = start, shuffle = shuffle) }
+        controller?.let { AudioQueue.play(it, tracks, graph.urls, startIndex = start, shuffle = shuffle, local = graph.downloads::fileFor) }
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = contentTopPadding(), bottom = contentBottomPadding()),
@@ -200,6 +200,7 @@ private fun AlbumBody(album: JfItem) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         GlassButton({ play() }, Modifier.weight(1f), prominent = true) { Icon(Icons.Rounded.PlayArrow, null); Text("Play") }
                         GlassButton({ play(shuffle = true) }, Modifier.weight(1f)) { Icon(Icons.Rounded.Shuffle, null); Text("Shuffle") }
+                        DownloadAllButton(tracks)
                     }
                 }
             }
@@ -228,6 +229,7 @@ fun TrackRow(track: JfItem, playing: Boolean, onClick: () -> Unit) {
                 color = if (playing) Spice.accent else MaterialTheme.colorScheme.onSurface)
             track.musicArtist?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
+        DownloadMark(track.id)
         track.runtimeSeconds?.let { Text(formatTrackTime(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }

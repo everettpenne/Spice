@@ -44,6 +44,9 @@ class MediaUrls(private val server: () -> String?, private val deviceId: () -> S
     fun directStream(itemId: String, mediaSourceId: String): String? = builder("Videos/$itemId/stream")
         ?.addQueryParameter("static", "true")?.addQueryParameter("mediaSourceId", mediaSourceId)?.addQueryParameter("deviceId", deviceId())?.build()?.toString()
 
+    /** The original file for saving to the phone (Jellyfin's download endpoint: the account must be allowed to download). */
+    fun download(itemId: String): String? = builder("Items/$itemId/Download")?.build()?.toString()
+
     /** The original audio file, served as it is. */
     fun audioStream(itemId: String, mediaSourceId: String?): String? = builder("Audio/$itemId/stream")?.apply {
         addQueryParameter("static", "true"); addQueryParameter("deviceId", deviceId())

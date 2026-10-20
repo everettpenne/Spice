@@ -92,6 +92,7 @@ private fun DetailBody(item: JfItem, nav: Navigator, onChanged: () -> Unit, scop
                         GlassIconButton(if (favorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (favorite) "Remove favorite" else "Add favorite",
                             { favorite = !favorite; scope.launch { graph.api.setFavorite(item.id, favorite) } }, tint = if (favorite) Spice.red else null, size = 48)
                     }
+                    if (item.isPlayable) DownloadButton(item)
                 }
                 item.overview?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
                 if (item.genres.isNotEmpty()) Text(item.genres.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -100,6 +101,12 @@ private fun DetailBody(item: JfItem, nav: Navigator, onChanged: () -> Unit, scop
         if (item.isSeries && seasonList.size > 1) item {
             LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(seasonList, key = { it.id }) { s -> GlassChip(s.id == chosenSeasonId, { season = s }) { Text(s.name) } }
+            }
+        }
+        if ((item.isSeries || item.isSeason) && episodeList.isNotEmpty()) item {
+            Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(seasonList.firstOrNull { it.id == chosenSeasonId }?.name ?: "Episodes", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                DownloadAllButton(episodeList)
             }
         }
         if (item.isSeries || item.isSeason) {
@@ -130,7 +137,10 @@ fun EpisodeRow(ep: JfItem, onClick: () -> Unit, current: Boolean = false) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("${ep.index?.let { "$it. " }.orEmpty()}${ep.name}", style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 color = if (current) Spice.accent else MaterialTheme.colorScheme.onSurface)
-            ep.runtimeMinutes?.let { Text(formatMinutes(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ep.runtimeMinutes?.let { Text(formatMinutes(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                DownloadMark(ep.id)
+            }
             ep.overview?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }
     }

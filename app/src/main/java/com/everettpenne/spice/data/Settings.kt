@@ -14,6 +14,7 @@ class Settings(context: Context) {
     private val _directPlay = flag("directPlay", true)
     private val _autoplayNext = flag("autoplayNext", true)
     private val _forceTranscode = flag("forceTranscode", false)
+    private val _wifiOnlyDownloads = flag("wifiOnlyDownloads", true)
 
     /** Try the original file first; fall back to a transcode only when it will not play. */
     val directPlay: StateFlow<Boolean> = _directPlay.asStateFlow()
@@ -22,6 +23,10 @@ class Settings(context: Context) {
     /** Always ask the server to transcode (for a slow or metered connection). */
     val forceTranscode: StateFlow<Boolean> = _forceTranscode.asStateFlow()
 
+    /** Downloads wait for Wi-Fi rather than use mobile data (films are large). */
+    val wifiOnlyDownloads: StateFlow<Boolean> = _wifiOnlyDownloads.asStateFlow()
+
+    fun setWifiOnlyDownloads(v: Boolean) = set("wifiOnlyDownloads", _wifiOnlyDownloads, v)
     fun setDirectPlay(v: Boolean) = set("directPlay", _directPlay, v)
     fun setAutoplayNext(v: Boolean) = set("autoplayNext", _autoplayNext, v)
     fun setForceTranscode(v: Boolean) = set("forceTranscode", _forceTranscode, v)
