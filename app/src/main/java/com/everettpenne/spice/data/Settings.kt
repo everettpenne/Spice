@@ -15,6 +15,7 @@ class Settings(context: Context) {
     private val _autoplayNext = flag("autoplayNext", true)
     private val _forceTranscode = flag("forceTranscode", false)
     private val _wifiOnlyDownloads = flag("wifiOnlyDownloads", true)
+    private val _linksInApp = flag("linksInApp", true)
 
     /** Try the original file first; fall back to a transcode only when it will not play. */
     val directPlay: StateFlow<Boolean> = _directPlay.asStateFlow()
@@ -27,6 +28,9 @@ class Settings(context: Context) {
     val wifiOnlyDownloads: StateFlow<Boolean> = _wifiOnlyDownloads.asStateFlow()
 
     fun setWifiOnlyDownloads(v: Boolean) = set("wifiOnlyDownloads", _wifiOnlyDownloads, v)
+    /** Links (an item's IMDb or TheMovieDb page) open in the suite's built-in browser over the app, or in Vanadium or the phone's browser. */
+    val linksInApp: StateFlow<Boolean> = _linksInApp.asStateFlow()
+    fun setLinksInApp(v: Boolean) = set("linksInApp", _linksInApp, v)
     fun setDirectPlay(v: Boolean) = set("directPlay", _directPlay, v)
     fun setAutoplayNext(v: Boolean) = set("autoplayNext", _autoplayNext, v)
     fun setForceTranscode(v: Boolean) = set("forceTranscode", _forceTranscode, v)

@@ -36,6 +36,8 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit, onDownloads: () 
     val force by graph.settings.forceTranscode.collectAsState()
     val autoNext by graph.settings.autoplayNext.collectAsState()
     val wifiOnly by graph.settings.wifiOnlyDownloads.collectAsState()
+    val linksInApp by graph.settings.linksInApp.collectAsState()
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val savedCount = graph.downloads.saved.collectAsState().value.size
     val downloadState by graph.downloads.state.collectAsState()
     var confirmSignOut by remember { mutableStateOf(false) }
@@ -58,6 +60,10 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit, onDownloads: () 
                 NavRow(Icons.Rounded.DownloadForOffline, "Downloads", if (savedCount == 0) "None" else "$savedCount  ·  ${formatBytes(graph.downloads.totalBytes(downloadState))}", onDownloads)
                 SwitchRow(Icons.Rounded.Wifi, "Download Only on Wi-Fi", wifiOnly, graph.settings::setWifiOnlyDownloads)
             }
+            Group("Links", footer = if (linksInApp) "Pages about a film or show (IMDb, TheMovieDb) open in Spice's own browser. On GrapheneOS it is Vanadium's WebView that draws them." else
+                "Pages about a film or show open in " + (if (com.everettpenne.browser.Browsers.hasVanadium(context)) "Vanadium." else "your browser.")) {
+                SwitchRow(Icons.Rounded.Language, "Open Links in Spice", linksInApp, graph.settings::setLinksInApp)
+            }
             Group("Storage") {
                 NavRow(Icons.Rounded.DeleteSweep, "Clear Image Cache", "%.1f MB".format(cacheBytes / 1_048_576.0)) {
                     val loader = SingletonImageLoader.get(context)
@@ -68,7 +74,7 @@ fun SettingsScreen(onBack: () -> Unit, onSignedOut: () -> Unit, onDownloads: () 
                 com.everettpenne.updater.LocalUpdater.current?.let { u -> NavRow(androidx.compose.material.icons.Icons.Rounded.SystemUpdate, "Check for Updates", u.collectStatus()) { u.onSettingsRowClick() } }
                 Row("Spice ${BuildConfig.VERSION_NAME}", Icons.Rounded.Info, "A Jellyfin client with iOS-style liquid glass")
                 NavRow(Icons.Rounded.Code, "Jellyfin", "Spice talks to your own Jellyfin server; nothing goes anywhere else") {
-                    context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/jellyfin")))
+                    uriHandler.openUri("https://github.com/jellyfin")
                 }
             }
             Text("Spice is an independent app and is not affiliated with the Jellyfin project.", style = MaterialTheme.typography.bodySmall,

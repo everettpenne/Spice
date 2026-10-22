@@ -155,7 +155,7 @@ class JellyfinApi(private val client: OkHttpClient, private val session: () -> S
         "ParentId" to parentId, "IncludeItemTypes" to types, "SortBy" to sortBy, "SortOrder" to sortOrder, "StartIndex" to "$start", "Limit" to "$limit",
         "SearchTerm" to search, "Filters" to filters, "Recursive" to recursive.toString(), "Genres" to genre, "Fields" to listFields)
 
-    suspend fun item(id: String): ApiResult<JfItem> = get("Users/$userId/Items/$id", "Fields" to "$listFields,MediaSources,MediaStreams,People")
+    suspend fun item(id: String): ApiResult<JfItem> = get("Users/$userId/Items/$id", "Fields" to "$listFields,MediaSources,MediaStreams,People,ExternalUrls")
 
     suspend fun seasons(seriesId: String): ApiResult<List<JfItem>> = get<ItemsResult>("Shows/$seriesId/Seasons", "UserId" to userId, "Fields" to listFields).map { it.items }
 

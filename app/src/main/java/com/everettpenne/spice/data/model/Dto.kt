@@ -60,6 +60,9 @@ const val TICKS_PER_SECOND = 10_000_000L
     @SerialName("MediaStreams") val streams: List<MediaStreamDto> = emptyList(),
 )
 
+/** A page about the item elsewhere (IMDb, TheMovieDb, TheTVDB, Trakt…), as the server lists it. */
+@Serializable data class ExternalUrlDto(@SerialName("Name") val name: String = "", @SerialName("Url") val url: String = "")
+
 @Serializable data class PersonDto(
     @SerialName("Id") val id: String = "",
     @SerialName("Name") val name: String = "",
@@ -100,6 +103,7 @@ const val TICKS_PER_SECOND = 10_000_000L
     @SerialName("UserData") val userData: UserData = UserData(),
     @SerialName("MediaSources") val mediaSources: List<MediaSourceDto> = emptyList(),
     @SerialName("People") val people: List<PersonDto> = emptyList(),
+    @SerialName("ExternalUrls") val externalUrls: List<ExternalUrlDto> = emptyList(),
 ) {
     val isEpisode get() = type == "Episode"
     val isSeries get() = type == "Series"

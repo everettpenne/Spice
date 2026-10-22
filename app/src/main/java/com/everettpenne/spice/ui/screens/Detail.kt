@@ -120,6 +120,14 @@ private fun DetailBody(item: JfItem, nav: Navigator, onChanged: () -> Unit, scop
         if (cast.isNotEmpty()) item {
             Text("With " + cast.joinToString(", "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 20.dp))
         }
+        // Pages about it elsewhere (IMDb, TheMovieDb…), which open in Spice's own browser.
+        val links = item.externalUrls.filter { com.everettpenne.browser.BrowserUrls.kind(it.url) == com.everettpenne.browser.LinkKind.WEB && it.name.isNotBlank() }
+        if (links.isNotEmpty()) item {
+            val open = com.everettpenne.browser.LocalBrowser.current
+            androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(links, key = { it.url }) { l -> com.everettpenne.glass.GlassChip(false, { open(l.url) }) { Text(l.name, maxLines = 1) } }
+            }
+        }
         (similar.state as? Load.Done)?.value?.takeIf { it.isNotEmpty() }?.let { more -> item { ShelfRow("More Like This", more, nav) } }
     }
 }

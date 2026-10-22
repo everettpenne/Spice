@@ -76,6 +76,8 @@ fun SpiceRoot() {
             }
         }) else null
 
+        val linksInApp by graph.settings.linksInApp.collectAsState()
+        com.everettpenne.browser.BrowserHost(inApp = linksInApp) {
         CompositionLocalProvider(com.everettpenne.updater.LocalUpdater provides updater, LocalTabBar provides tabBar) {
             // The plain page colour is also a glass backdrop, recorded in a sibling of the screens: recording the screens themselves would make
             // any glass control inside them sample a layer that contains it, which sends the renderer into endless recursion.
@@ -118,6 +120,7 @@ fun SpiceRoot() {
                     }
                 }
             }
+        }
         }
     }
 }
